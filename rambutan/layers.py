@@ -34,9 +34,27 @@ class Database( object ):
 		"""Convert the parameters to the string format for the prototxt file."""
 
 		return 'data_param {\n' + \
-		       '    source: {}\n'.format( self.source ) + \
+		       '    source: "{}"\n'.format( self.source ) + \
 		       '    batch_size: {}\n'.format( self.batch_size ) + \
 		       '    backend: {}\n'.format( self.backend ) + \
+		       '  }'
+
+class LMDB( object ):
+	"""An input layer for loading data from LMDB specifically."""
+
+	type = "Data"
+
+	def __init__( self, source, batch_size ):
+		self.source = source
+		self.batch_size = batch_size
+
+	def to_prototxt( self ):
+		"""Convert the parameters to the string format for the prototxt file."""
+
+		return 'data_param {\n' + \
+		       '    source: "{}"\n'.format( self.source ) + \
+		       '    batch_size: {}\n'.format( self.batch_size ) + \
+		       '    backend: LMDB\n' + \
 		       '  }'
 
 class InMemory( object ):
@@ -73,7 +91,7 @@ class HDF5Data( object ):
 		"""Convert the parameters to the string format for the prototxt file."""
 
 		return 'hdf5_data_param {\n' + \
-		       '    source: {}\n'.format( self.source ) + \
+		       '    source: "{}"\n'.format( self.source ) + \
 		       '    batch_size: {}\n'.format( self.batch_size ) + \
 		       '  }'
 
@@ -115,11 +133,11 @@ class Convolution( object ):
 
 	type = "Convolution"
 
-	def __init__( self, num_output, kernel_size, stride=1, pad=0, group=1, 
+	def __init__( self, kernel_h, kernel_w, num_output, stride=1, pad=0, group=1, 
 		bias_term=True, weight=None, bias=None ):
 		self.num_output = num_output
-		self.kernel_h = kernel_size if isinstance(kernel_size, int) else kernel_size[0]
-		self.kernel_w = kernel_size if isinstance(kernel_size, int) else kernel_size[1]
+		self.kernel_h = kernel_h
+		self.kernel_w = kernel_w
 		self.pad_h = pad if isinstance(pad, int) else pad[0]
 		self.pad_w = pad if isinstance(pad, int) else pad[1]
 		self.stride = stride
@@ -160,10 +178,10 @@ class Pooling( object ):
 
 	type = "Pooling"
 
-	def __init__( self, pool="MAX", kernel_size=3, stride=1, pad=0 ):
+	def __init__( self, kernel_h, kernel_w, pool="MAX", kernel_size=3, stride=1, pad=0 ):
 		self.pool = pool
-		self.kernel_h = kernel_size if isinstance(kernel_size, int) else kernel_size[0]
-		self.kernel_w = kernel_size if isinstance(kernel_size, int) else kernel_size[1]
+		self.kernel_h = kernel_h
+		self.kernel_w = kernel_w
 		self.pad_h = pad if isinstance(pad, int) else pad[0]
 		self.pad_w = pad if isinstance(pad, int) else pad[1]
 		self.stride = stride
