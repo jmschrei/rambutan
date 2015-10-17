@@ -104,11 +104,13 @@ class InnerProduct( object ):
 
 	type = "InnerProduct"
 
-	def __init__( self, num_output, bias_term=True, weight=None, bias=None ):
+	def __init__( self, num_output, activation='linear', bias_term=True, weight=None, bias=None ):
+
 		self.num_output = num_output
 		self.bias_term = bias_term
 		self.weight = weight
 		self.bias = bias
+		self.activation = activation
 
 	def to_prototxt( self ):
 		"""Convert the parameters to the string format for the prototxt file."""
@@ -128,13 +130,29 @@ class InnerProduct( object ):
 		prototxt += '  }'
 		return prototxt
 
+class Concat( object ):
+	"""A concatenation of multiple input dimensions."""
+
+	type = "Concat"
+
+	def __init__( self, concat_dim=1 ): 
+		self.concat_dim = concat_dim
+
+	def to_prototxt( self ):
+		"""Convert the layer to string format for the prototxt file."""
+
+		return 'concat_param {\n' + \
+		       '    concat_dim: {}\n'.format( str(self.concat_dim) ) + \
+		       '  }\n'
+
 class Convolution( object ):
 	"""A convolution layer."""
 
 	type = "Convolution"
 
-	def __init__( self, kernel_h, kernel_w, num_output, stride=1, pad=0, group=1, 
-		bias_term=True, weight=None, bias=None ):
+	def __init__( self, kernel_h, kernel_w, num_output, stride=1, activation='linear',
+		pad=0, group=1, bias_term=True, weight=None, bias=None ):
+
 		self.num_output = num_output
 		self.kernel_h = kernel_h
 		self.kernel_w = kernel_w
@@ -145,6 +163,7 @@ class Convolution( object ):
 		self.bias_term = bias_term
 		self.bias = bias
 		self.group = 1
+		self.activation = activation
 
 	def to_prototxt( self ):
 		"""Convert the parameters to the string format for the prototxt file."""

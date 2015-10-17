@@ -10,6 +10,28 @@ to do prediction.
 import os
 #import caffe
 
+from .layers import *
+
+class Output( object ):
+	"""The output of a network."""
+
+	name = "Output"
+
+	def __init__( self, type, name, bottom=None ):
+		self.type = type
+		self.name = name
+		self.bottom = bottom 
+
+	def to_prototxt( self ):
+		"""Convert the output to the string format for the prototxt file."""
+
+		return 'layer {\n' + \
+		       '  name: "{}"\n'.format( self.name ) + \
+		       '  type: "{}"\n'.format( self.type ) + \
+		       '  bottom: "{}"\n'.format( self.bottom ) + \
+		       '  top: "{}"\n'.format( self.name ) + \
+		       '}\n'
+
 class Layer( object ):
 	"""A single node, containing a layer, a name, and a pointer to
 	nodes above and below."""
@@ -43,6 +65,15 @@ class Layer( object ):
 
 		prototxt += '  {}\n'.format( self.layer.to_prototxt() )
 		prototxt += '}\n'
+
+		if hasattr( self.layer, 'activation' ) and self.layer.activation != 'linear':
+			prototxt += '\nlayer {\n' + \
+			            '  name: "{}"\n'.format( self.name + '_relu' ) + \
+			            '  type: "{}"\n'.format( self.layer.activation ) + \
+			            '  bottom: "{}"\n'.format( self.name ) + \
+			            '  top: "{}"\n'.format( self.name ) + \
+			            '}\n'
+
 		return prototxt
 
 
@@ -59,10 +90,31 @@ class Model( object ):
 		self.policy = { key: value for key, value in kwargs.items() }
 
 
-	def add_node( self, layer, name, input=None ):
+	def add_node( self, layer, name, input, concat_dim=1 ):
 		"""Add a node to the graph that is this model."""
 
+		if isinstance( input, list ):
+			node = Layer( Concat( concat_dim ), name="pre_{}_concat".format( name ), bottom=input )
+			self.nodes["pre_{}_concat".format( name )] = node
+			self.ordered_nodes.append( node )
+
+			input = "pre_{}_concat".format( name )
+
 		node = Layer( layer, name, bottom=input )
+		self.nodes[name] = node
+		self.ordered_nodes.append( node )
+
+	def add_input( self, layer, name ):
+		"""Add a node which represents an input to the model."""
+
+		node = Layer( layer, name )
+		self.nodes[name] = node
+		self.ordered_nodes.append( node )
+
+	def add_output( self, type, name, input ):
+		"""Add a node which represents an output of the model."""
+
+		node = Output( type, name, bottom=input )
 		self.nodes[name] = node
 		self.ordered_nodes.append( node )
 
@@ -71,17 +123,40 @@ class Model( object ):
 
 		for name, node in self.nodes.items():
 			if node.bottom is not None:
-				bottom = self.nodes[node.bottom]
+				if isinstance( node.bottom, str ):
+					bottom_node = node.bottom
+					bottom = self.nodes[bottom_node]
 
-				if bottom.top is None:
-					bottom.top = name
-				elif isinstance( bottom.top, str ):
-					bottom.top = [bottom.top, name]
-				elif isinstance( bottom.top, list ):
-					bottom.top.append( name )
-				else:
-					raise ValueError( "bottom.top must be a string or a list or None"
-						              "but is a {}".format( type(bottom.top) ) )
+					if bottom.top is None:
+						bottom.top = name
+					elif isinstance( bottom.top, str ):
+						bottom.top = [bottom.top, name]
+					elif isinstance( bottom.top, list ):
+						bottom.top.append( name )
+					else:
+						raise ValueError( "bottom.top must be a string or a list or None"
+							              "but is a {}".format( type(bottom.top) ) )
+
+				elif isinstance( node.bottom, list ):
+					for bottom_node in node.bottom:
+						bottom = self.nodes[bottom_node]
+
+						if bottom.top is None:
+							bottom.top = name
+						elif isinstance( bottom.top, str ):
+							bottom.top = [bottom.top, name]
+						elif isinstance( bottom.top, list ):
+							bottom.top.append( name )
+						else:
+							raise ValueError( "bottom.top must be a string or a list or None"
+								              "but is a {}".format( type(bottom.top) ) )
+
+		print self.to_prototxt()
+		print
+		print
+		print
+		print
+		print self.to_policy_prototxt()
 
 	def to_prototxt( self ):
 		"""Convert the model to a prototxt file."""
