@@ -93,6 +93,7 @@ class Model( object ):
 		self.name = name
 		self.policy_name = policy_name or name + '_policy'
 		self.ordered_nodes = []
+		self.input_names = []
 		self.nodes = {}
 		self.policy = { key: value for key, value in kwargs.items() }
 
@@ -114,6 +115,7 @@ class Model( object ):
 		"""Add a node which represents an input to the model."""
 
 		node = Layer( layer, name )
+		self.input_names.append( name )
 		self.nodes[name] = node
 		self.ordered_nodes.append( node )
 
@@ -163,13 +165,6 @@ class Model( object ):
 		with open( self.policy_name + '.prototxt', 'w' ) as policy:
 			policy.write( self.policy_to_prototxt() )
 
-		print self.model_to_prototxt()
-		print
-		print
-		print
-		print
-		print self.policy_to_prototxt()
-
 	def model_to_prototxt( self ):
 		"""Convert the model to a prototxt file."""
 
@@ -181,15 +176,31 @@ class Model( object ):
 		return 'net: {}\n'.format( self.name + '.prototxt') + \
 		      '\n'.join( '{}: {}'.format( key, value ) for key, value in self.policy.items() )
 
-	def fit( self, gpu=None, iterations=None, snapshot=None, weights=None, suffix='' ):
+	def fit( self, source=None, gpu=None, iterations=None, snapshot=None, weights=None, suffix='' ):
 		"""Fit the network to the data."""
+
+		if source is not None:
+			if self.nodes == {}:
+				raise ValueError( "Cannot define a new input if reading from existing prototxt file." )
+			if isinstance( source, str ):
+				node = self.nodes[self.input_names[0]]
+				node.layer.source = source
+			elif isinstance( source, dict ):
+				for name, path in source.items():
+					node = self.nodes[ name ]
+					node.layer.source = path
+			else:
+				raise ValueError( "Source must be a string or a dictionary of node name: path pairs." )
+
+			with open( self.name + '.prototxt', 'w' ) as model:
+				model.write( self.model_to_prototxt() )
 
 		command = 'caffe train -solver={}'.format( self.policy_name )
 		if gpu is not None:
 			command += '-gpu {}'.format( str(gpu) )
 		if iterations is not None:
 			command += '-iterations {}'.format( str(iterations) )
-		if iteration is not None:
+		if snapshot is not None:
 			command += '-snapshot {}'.format( snapshot )
 		if weights is not None:
 			command += '-weights {}'.format( weights )
@@ -203,5 +214,4 @@ class Model( object ):
 
 		name = model.replace('.prototxt', '')
 		policy_name = policy.replace('.prototxt', '') if policy is not None else None
-
-		return cls( name, policy_name=policy_name )
+		return network = cls( name, policy_name=policy_name )
