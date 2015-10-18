@@ -38,11 +38,12 @@ class Layer( object ):
 
 	name = "Layer"
 
-	def __init__( self, layer, name, bottom=None, top=None ):
+	def __init__( self, layer, name, bottom=None, top=None, params=None ):
 		self.layer = layer 
 		self.name = name
 		self.bottom = bottom
 		self.top = top
+		self.params = params
 
 	def to_prototxt( self ):
 		"""Convert the node to the string format for the prototxt file."""
@@ -62,6 +63,12 @@ class Layer( object ):
 		elif isinstance( self.bottom, list ):
 			for node in self.bottom:
 				prototxt += '  bottom: "{}"\n'.format( node )
+
+		if self.params is not None:
+			for param in self.params:
+				prototxt += '  param {\n' + \
+				            '    name: {}\n'.format( param ) + \
+				            '  }'
 
 		prototxt += '  {}\n'.format( self.layer.to_prototxt() )
 		prototxt += '}\n'
@@ -89,7 +96,7 @@ class Model( object ):
 		self.nodes = {}
 		self.policy = { key: value for key, value in kwargs.items() }
 
-	def add_node( self, layer, name, input, concat_dim=1 ):
+	def add_node( self, layer, name, input, params=None, concat_dim=1 ):
 		"""Add a node to the graph that is this model."""
 
 		if isinstance( input, list ) and not isinstance( layer, Concat ):
@@ -174,14 +181,20 @@ class Model( object ):
 		return 'net: {}\n'.format( self.name + '.prototxt') + \
 		      '\n'.join( '{}: {}'.format( key, value ) for key, value in self.policy.items() )
 
-	def fit( self, gpu=None, suffix='' ):
+	def fit( self, gpu=None, iterations=None, snapshot=None, weights=None, suffix='' ):
 		"""Fit the network to the data."""
 
 		command = 'caffe train -solver={}'.format( self.policy_name )
 		if gpu is not None:
 			command += '-gpu {}'.format( str(gpu) )
+		if iterations is not None:
+			command += '-iterations {}'.format( str(iterations) )
+		if iteration is not None:
+			command += '-snapshot {}'.format( snapshot )
+		if weights is not None:
+			command += '-weights {}'.format( weights )
 		command += suffix
-		
+
 		os.execute(command)
 
 	@classmethod
