@@ -83,17 +83,15 @@ class Model( object ):
 	name = 'Model'
 
 	def __init__( self, name='caffe-model', **kwargs ):
-
 		self.name = name
 		self.ordered_nodes = []
 		self.nodes = {}
 		self.policy = { key: value for key, value in kwargs.items() }
 
-
 	def add_node( self, layer, name, input, concat_dim=1 ):
 		"""Add a node to the graph that is this model."""
 
-		if isinstance( input, list ):
+		if isinstance( input, list ) and not isinstance( layer, Concat ):
 			node = Layer( Concat( concat_dim ), name="pre_{}_concat".format( name ), bottom=input )
 			self.nodes["pre_{}_concat".format( name )] = node
 			self.ordered_nodes.append( node )
@@ -151,30 +149,52 @@ class Model( object ):
 							raise ValueError( "bottom.top must be a string or a list or None"
 								              "but is a {}".format( type(bottom.top) ) )
 
-		print self.to_prototxt()
-		print
-		print
-		print
-		print
-		print self.to_policy_prototxt()
+		with open( self.name + '.prototxt', 'w' ) as model:
+			model.write( self.model_to_prototxt() )
 
-	def to_prototxt( self ):
+		with open( self.name + '_policy.prototxt', 'w' ) as policy:
+			policy.write( self.policy_to_prototxt() )
+
+		self.policy_name = self.name + '_policy'
+
+		print self.model_to_prototxt()
+		print
+		print
+		print
+		print
+		print self.policy_to_prototxt()
+
+	def model_to_prototxt( self ):
 		"""Convert the model to a prototxt file."""
 
 		return '\n'.join( node.to_prototxt() for node in self.ordered_nodes )
 
-	def to_policy_prototxt( self ):
+	def policy_to_prototxt( self ):
 		"""Convert the parameters to a policy prototxt file."""
 
 		return 'net: {}\n'.format( self.name + '.prototxt') + \
 		      '\n'.join( '{}: {}'.format( key, value ) for key, value in self.policy.items() )
 
-	def fit( self, source=None, policy=None, gpu=0 ):
+	def fit( self, gpu=0 ):
 		"""Fit the network to the data."""
 
-		if policy is None:
+		if self.policy_name is None:
 			policy = '{}_policy.prototxt'.format( self.name )
 			with open( policy, 'w') as policy:
 				policy.write( self.to_policy_prototxt() )
 
 		os.execute('caffe train -solver={} -gpu {}'.format( policy, str(gpu) ))
+
+	@classmethod
+	def from_prototxts( cls, model, policy ):
+		"""Link a model object to existing prototxt files."""
+
+		policy_params = {}
+		with open( policy, 'r' ) as policy_proto:
+			for line in policy_proto:
+				line = line.strip('\r\n').split(':')
+				policy_params[line[0]] = line[1]
+
+		name = model.strip('.prototxt')
+
+		return cls( name, **policy )
