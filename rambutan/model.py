@@ -174,16 +174,21 @@ class Model( object ):
 		return 'net: {}\n'.format( self.name + '.prototxt') + \
 		      '\n'.join( '{}: {}'.format( key, value ) for key, value in self.policy.items() )
 
-	def fit( self, gpu=0, suffix='' ):
+	def fit( self, gpu=None, suffix='' ):
 		"""Fit the network to the data."""
 
-		os.execute('caffe train -solver={} -gpu {} {}'.format( policy, str(gpu), suffix ))
+		command = 'caffe train -solver={}'.format( self.policy_name )
+		if gpu is not None:
+			command += '-gpu {}'.format( str(gpu) )
+		command += suffix
+		
+		os.execute(command)
 
 	@classmethod
-	def from_prototxts( cls, model, policy ):
+	def from_prototxts( cls, model, policy=None ):
 		"""Link a model object to existing prototxt files."""
 
-		name = model.strip('.prototxt')
-		policy_name = model.strip('.prototxt')
+		name = model.replace('.prototxt', '')
+		policy_name = policy.replace('.prototxt', '') if policy is not None else None
 
 		return cls( name, policy_name=policy_name )
