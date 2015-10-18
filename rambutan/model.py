@@ -82,8 +82,9 @@ class Model( object ):
 
 	name = 'Model'
 
-	def __init__( self, name='caffe-model', **kwargs ):
+	def __init__( self, name='caffe-model', policy_name=None, **kwargs ):
 		self.name = name
+		self.policy_name = policy_name or name + '_policy'
 		self.ordered_nodes = []
 		self.nodes = {}
 		self.policy = { key: value for key, value in kwargs.items() }
@@ -152,10 +153,8 @@ class Model( object ):
 		with open( self.name + '.prototxt', 'w' ) as model:
 			model.write( self.model_to_prototxt() )
 
-		with open( self.name + '_policy.prototxt', 'w' ) as policy:
+		with open( self.policy_name + '.prototxt', 'w' ) as policy:
 			policy.write( self.policy_to_prototxt() )
-
-		self.policy_name = self.name + '_policy'
 
 		print self.model_to_prototxt()
 		print
@@ -175,26 +174,16 @@ class Model( object ):
 		return 'net: {}\n'.format( self.name + '.prototxt') + \
 		      '\n'.join( '{}: {}'.format( key, value ) for key, value in self.policy.items() )
 
-	def fit( self, gpu=0 ):
+	def fit( self, gpu=0, suffix='' ):
 		"""Fit the network to the data."""
 
-		if self.policy_name is None:
-			policy = '{}_policy.prototxt'.format( self.name )
-			with open( policy, 'w') as policy:
-				policy.write( self.to_policy_prototxt() )
-
-		os.execute('caffe train -solver={} -gpu {}'.format( policy, str(gpu) ))
+		os.execute('caffe train -solver={} -gpu {} {}'.format( policy, str(gpu), suffix ))
 
 	@classmethod
 	def from_prototxts( cls, model, policy ):
 		"""Link a model object to existing prototxt files."""
 
-		policy_params = {}
-		with open( policy, 'r' ) as policy_proto:
-			for line in policy_proto:
-				line = line.strip('\r\n').split(':')
-				policy_params[line[0]] = line[1]
-
 		name = model.strip('.prototxt')
+		policy_name = model.strip('.prototxt')
 
-		return cls( name, **policy )
+		return cls( name, policy_name=policy_name )
