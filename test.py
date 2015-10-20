@@ -1,6 +1,6 @@
 from rambutan import *
 
-model = Model( solver_type='ADAM', test_iter=17, test_interval=40, base_lr=0.0001, weight_decay=0.0 )
+model = Model()
 
 model.add_input( LMDB('../data/x1_seq_chr21_train_lmdb', batch_size=1024 ), "x1_seq" )
 model.add_input( LMDB('../data/x2_seq_chr21_train_lmdb', batch_size=1024 ), "x2_seq" )
@@ -21,4 +21,4 @@ model.add_node( InnerProduct(2), "y_pred", input="x_ip1" )
 model.add_output( "SoftmaxWithLoss", "loss", input="y_pred" )
 model.add_output( "Accuracy", "accuracy", input="y_pred" )
 
-model.compile()
+model.compile( solver='ADAM' )

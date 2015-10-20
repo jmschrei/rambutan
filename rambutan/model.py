@@ -11,6 +11,7 @@ import os
 #import caffe
 
 from .layers import *
+from .solvers import *
 
 class Output( object ):
 	"""The output of a network."""
@@ -38,12 +39,13 @@ class Layer( object ):
 
 	name = "Layer"
 
-	def __init__( self, layer, name, bottom=None, top=None, params=None ):
+	def __init__( self, layer, name, bottom=None, top=None, params=None, phase=None ):
 		self.layer = layer 
 		self.name = name
 		self.bottom = bottom
 		self.top = top
 		self.params = params
+		self.phase = phase
 
 	def to_prototxt( self ):
 		"""Convert the node to the string format for the prototxt file."""
@@ -64,11 +66,16 @@ class Layer( object ):
 			for node in self.bottom:
 				prototxt += '  bottom: "{}"\n'.format( node )
 
+		if self.phase is not None:
+			prototxt += '  include {\n' + \
+			            '    phase: {}\n'.format( self.phase ) + \
+			            '  }\n'
+
 		if self.params is not None:
 			for param in self.params:
 				prototxt += '  param {\n' + \
 				            '    name: {}\n'.format( param ) + \
-				            '  }'
+				            '  }\n'
 
 		prototxt += '  {}\n'.format( self.layer.to_prototxt() )
 		prototxt += '}\n'
@@ -89,13 +96,12 @@ class Model( object ):
 
 	name = 'Model'
 
-	def __init__( self, name='caffe-model', policy_name=None, **kwargs ):
+	def __init__( self, name='caffe-model', policy_name=None ):
 		self.name = name
 		self.policy_name = policy_name or name + '_policy'
 		self.ordered_nodes = []
 		self.input_names = []
 		self.nodes = {}
-		self.policy = { key: value for key, value in kwargs.items() }
 
 	def add_node( self, layer, name, input, params=None, concat_dim=1 ):
 		"""Add a node to the graph that is this model."""
@@ -126,7 +132,7 @@ class Model( object ):
 		self.nodes[name] = node
 		self.ordered_nodes.append( node )
 
-	def compile( self ):
+	def compile( self, solver, **kwargs ):
 		"""Compile the graph, added all of the 'top' linkers."""
 
 		for name, node in self.nodes.items():
@@ -159,22 +165,22 @@ class Model( object ):
 							raise ValueError( "bottom.top must be a string or a list or None"
 								              "but is a {}".format( type(bottom.top) ) )
 
+		if isinstance( solver, str ):
+			solver = solvers[solver]
+
 		with open( self.name + '.prototxt', 'w' ) as model:
-			model.write( self.model_to_prototxt() )
+			model.write( self.to_prototxt() )
 
 		with open( self.policy_name + '.prototxt', 'w' ) as policy:
-			policy.write( self.policy_to_prototxt() )
+			policy.write( 'net: "{}.prototxt"\n'.format( self.name ) )
+			policy.write( solver.to_prototxt() )
+			for key, val in kwargs.iteritems():
+				policy.write( "{}: {}\n".format( key, val ) )
 
-	def model_to_prototxt( self ):
+	def to_prototxt( self ):
 		"""Convert the model to a prototxt file."""
 
 		return '\n'.join( node.to_prototxt() for node in self.ordered_nodes )
-
-	def policy_to_prototxt( self ):
-		"""Convert the parameters to a policy prototxt file."""
-
-		return 'net: {}\n'.format( self.name + '.prototxt') + \
-		      '\n'.join( '{}: {}'.format( key, value ) for key, value in self.policy.items() )
 
 	def fit( self, source=None, gpu=None, iterations=None, snapshot=None, weights=None, suffix='' ):
 		"""Fit the network to the data."""
@@ -214,4 +220,4 @@ class Model( object ):
 
 		name = model.replace('.prototxt', '')
 		policy_name = policy.replace('.prototxt', '') if policy is not None else None
-		return network = cls( name, policy_name=policy_name )
+		return cls( name, policy_name=policy_name )
