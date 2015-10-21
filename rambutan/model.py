@@ -151,10 +151,10 @@ class Model( object ):
 		self.nodes[name] = node
 		self.ordered_nodes.append( node )
 
-	def add_input( self, layer, name, label='label' ):
+	def add_input( self, layer, name, label=None, phase=None ):
 		"""Add a node which represents an input to the model."""
 
-		node = Layer( layer, name, top=label )
+		node = Layer( layer, name, top=label, phase=phase )
 		self.input_names.append( name )
 		self.nodes[name] = node
 		self.ordered_nodes.append( node )
@@ -173,14 +173,6 @@ class Model( object ):
 
 	def compile( self, solver, **kwargs ):
 		"""Compile the graph, added all of the 'top' linkers."""
-
-		labels = []
-		for name in self.input_names:
-			node = self.nodes[name]
-			if node.top in labels:
-				node.top = None
-			else:
-				labels.append( node.top )
 
 		if isinstance( solver, str ):
 			solver = solvers[solver]
