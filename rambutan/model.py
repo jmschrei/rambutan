@@ -7,7 +7,7 @@ new graphs, load them from prototxts, train them, or use them
 to do prediction.
 """
 
-import os
+import subprocess
 #import caffe
 
 from .layers import *
