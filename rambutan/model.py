@@ -36,7 +36,7 @@ class Output( object ):
 
 	name = "Output"
 
-	def __init__( self, type, name, bottom=None ):
+	def __init__( self, type, name, bottom ):
 		self.type = type
 		self.name = name
 		self.bottom = bottom 
@@ -44,12 +44,18 @@ class Output( object ):
 	def to_prototxt( self ):
 		"""Convert the output to the string format for the prototxt file."""
 
-		return 'layer {\n' + \
-		       '  name: "{}"\n'.format( self.name ) + \
-		       '  type: "{}"\n'.format( self.type ) + \
-		       '  bottom: "{}"\n'.format( self.bottom ) + \
-		       '  top: "{}"\n'.format( self.name ) + \
-		       '}\n'
+		prototxt = 'layer {\n' + \
+		           '  name: "{}"\n'.format( self.name ) + \
+		           '  type: "{}"\n'.format( self.type ) + \
+		           '  top: "{}"\n'.format( self.name )
+
+		if isinstance( self.bottom, list ):
+			for bottom in self.bottom:
+				prototxt += '  bottom: "{}"\n'.format( bottom )
+		else:
+			prototxt += '  bottom: "{}"\n'.format( bottom )
+
+		return prototxt
 
 class Layer( object ):
 	"""A single node, containing a layer, a name, and a pointer to
@@ -152,8 +158,13 @@ class Model( object ):
 		self.nodes[name] = node
 		self.ordered_nodes.append( node )
 
-	def add_output( self, type, name, input ):
+	def add_output( self, type, name, input, label='label' ):
 		"""Add a node which represents an output of the model."""
+
+		if isinstance( input, list ):
+			input += [label]
+		else:
+			input = [input, label]
 
 		node = Output( type, name, bottom=input )
 		self.nodes[name] = node
