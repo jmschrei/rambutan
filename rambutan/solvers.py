@@ -10,13 +10,14 @@ class Solver( object ):
 	The solver to use.
 	"""
 
-	def __init__( self, solver_type, lr, momentum=None, weight_decay=None, gamma=None, stepsize=None, **kwargs ):
+	def __init__( self, solver_type, lr, momentum=None, weight_decay=None, gamma=None, stepsize=None, policy='fixed', **kwargs ):
 		self.solver_type = solver_type
 		self.lr = lr
 		self.momentum = momentum
 		self.gamma = gamma
 		self.stepsize = stepsize
 		self.weight_decay = weight_decay
+		self.policy = policy
 		self.kwargs = kwargs
 
 	def to_prototxt( self ):
@@ -32,6 +33,7 @@ class Solver( object ):
 		if self.stepsize is not None:
 			prototxt += 'stepsize: {}\n'.format( self.stepsize )
 
+		prototxt += 'lr_policy: "{}"'.format( self.policy )
 		for key, val in self.kwargs.iteritems():
 			prototxt += '{}: {}\n'.format( key, val )
 

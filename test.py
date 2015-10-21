@@ -21,4 +21,5 @@ model.add_node( InnerProduct(2), "y_pred", input="x_ip1" )
 model.add_output( "SoftmaxWithLoss", "loss", input="y_pred" )
 model.add_output( "Accuracy", "accuracy", input="y_pred" )
 
-model.compile( solver='ADAM' )
+model.compile( solver='ADAM', max_iter=10000, test_iter=15, test_interval=140 )
+model.fit( gpu=2 )
