@@ -214,6 +214,8 @@ class Model( object ):
 	def fit( self, source=None, gpu=None, iterations=None, snapshot=None, weights=None, suffix='' ):
 		"""Fit the network to the data."""
 
+		command = 'caffe train solver={}'.format( self.policy_name )
+
 		if source is not None:
 			if self.nodes == {}:
 				raise ValueError( "Cannot define a new input if reading from existing prototxt file." )
@@ -230,7 +232,7 @@ class Model( object ):
 			with open( self.name + '.prototxt', 'w' ) as model:
 				model.write( self.model_to_prototxt() )
 
-		command = 'caffe train -solver={}'.format( self.policy_name )
+
 		if gpu is not None:
 			command += '-gpu {}'.format( str(gpu) )
 		if iterations is not None:
@@ -241,7 +243,8 @@ class Model( object ):
 			command += '-weights {}'.format( weights )
 		command += suffix
 
-		os.execute(command)
+		subprocess.call( command.split() )
+		
 
 	@classmethod
 	def from_prototxts( cls, model, policy=None ):
