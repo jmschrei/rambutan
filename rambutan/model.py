@@ -162,6 +162,14 @@ class Model( object ):
 	def compile( self, solver, **kwargs ):
 		"""Compile the graph, added all of the 'top' linkers."""
 
+		labels = []
+		for name in self.input_names:
+			node = self.nodes[name]
+			if node.top in labels:
+				node.top = None
+			else:
+				labels.append( node.top )
+
 		if isinstance( solver, str ):
 			solver = solvers[solver]
 
