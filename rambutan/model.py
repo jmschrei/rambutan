@@ -70,13 +70,11 @@ class Layer( object ):
 
 		prototxt = 'layer {\n' + \
 		           '  name: "{}"\n'.format( self.name ) + \
-		           '  type: "{}"\n'.format( self.layer.type )
+		           '  type: "{}"\n'.format( self.layer.type ) + \
+		           '  top: "{}"\n'.format( self.name )
 
-		if isinstance( self.top, str ):
+		if self.top is not None:
 			prototxt += '  top: "{}"\n'.format( self.top )
-		elif isinstance( self.top, list ):
-			for node in self.top:
-				prototxt += '  top: "{}"\n'.format( node )
 
 		if isinstance( self.bottom, str ):
 			prototxt += '  bottom: "{}"\n'.format( self.bottom )
@@ -146,10 +144,10 @@ class Model( object ):
 		self.nodes[name] = node
 		self.ordered_nodes.append( node )
 
-	def add_input( self, layer, name ):
+	def add_input( self, layer, name, label='label' ):
 		"""Add a node which represents an input to the model."""
 
-		node = Layer( layer, name )
+		node = Layer( layer, name, top=label )
 		self.input_names.append( name )
 		self.nodes[name] = node
 		self.ordered_nodes.append( node )
@@ -163,36 +161,6 @@ class Model( object ):
 
 	def compile( self, solver, **kwargs ):
 		"""Compile the graph, added all of the 'top' linkers."""
-
-		for name, node in self.nodes.items():
-			if node.bottom is not None:
-				if isinstance( node.bottom, str ):
-					bottom_node = node.bottom
-					bottom = self.nodes[bottom_node]
-
-					if bottom.top is None:
-						bottom.top = name
-					elif isinstance( bottom.top, str ):
-						bottom.top = [bottom.top, name]
-					elif isinstance( bottom.top, list ):
-						bottom.top.append( name )
-					else:
-						raise ValueError( "bottom.top must be a string or a list or None"
-							              "but is a {}".format( type(bottom.top) ) )
-
-				elif isinstance( node.bottom, list ):
-					for bottom_node in node.bottom:
-						bottom = self.nodes[bottom_node]
-
-						if bottom.top is None:
-							bottom.top = name
-						elif isinstance( bottom.top, str ):
-							bottom.top = [bottom.top, name]
-						elif isinstance( bottom.top, list ):
-							bottom.top.append( name )
-						else:
-							raise ValueError( "bottom.top must be a string or a list or None"
-								              "but is a {}".format( type(bottom.top) ) )
 
 		if isinstance( solver, str ):
 			solver = solvers[solver]

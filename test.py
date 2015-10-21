@@ -22,4 +22,3 @@ model.add_output( "SoftmaxWithLoss", "loss", input="y_pred" )
 model.add_output( "Accuracy", "accuracy", input="y_pred" )
 
 model.compile( solver='ADAM' )
-model.fit()
