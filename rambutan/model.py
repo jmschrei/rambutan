@@ -13,6 +13,24 @@ import os
 from .layers import *
 from .solvers import *
 
+class Param( object ):
+	"""A parameter, for ease of use."""
+
+	name = "param"
+
+	def __init__( self, **kwargs ):
+		self.kwargs = kwargs
+
+	def to_prototxt( self ):
+		"""Convert the output to the string format for the prototxt file."""
+
+		prototxt = "  param {\n"
+		for key, value in self.kwargs.items():
+			prototxt += "    {}: {}\n".format( key, value )
+		prototxt += "  }\n"
+
+		return prototxt
+
 class Output( object ):
 	"""The output of a network."""
 
@@ -39,12 +57,12 @@ class Layer( object ):
 
 	name = "Layer"
 
-	def __init__( self, layer, name, bottom=None, top=None, params=None, phase=None ):
+	def __init__( self, layer, name, bottom=None, top=None, param=None, phase=None ):
 		self.layer = layer 
 		self.name = name
 		self.bottom = bottom
 		self.top = top
-		self.params = params
+		self.param = param
 		self.phase = phase
 
 	def to_prototxt( self ):
@@ -71,11 +89,22 @@ class Layer( object ):
 			            '    phase: {}\n'.format( self.phase ) + \
 			            '  }\n'
 
-		if self.params is not None:
-			for param in self.params:
-				prototxt += '  param {\n' + \
-				            '    name: {}\n'.format( param ) + \
-				            '  }\n'
+		if isinstance( self.param, dict ):
+			prototxt += '  param {\n'
+			for key, val in param.items():
+				prototxt += '    {}: {}\n'.format( key, val )
+			prototxt += '  }\n'
+		elif isinstance( self.param, Param ):
+			prototxt += self.param.to_prototxt()
+		elif isinstance( self.param, list ):
+			for param in self.param:
+				if isinstance( param, Param ):
+					prototxt += param.to_prototxt()
+				elif isinstance( param, dict ):
+					prototxt += '  param {\n'
+					for key, val in param.items():
+						prototxt += '    {}: {}\n'.format( key, val )
+					prototxt += '  }\n'					
 
 		prototxt += '  {}\n'.format( self.layer.to_prototxt() )
 		prototxt += '}\n'

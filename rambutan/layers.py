@@ -104,13 +104,13 @@ class InnerProduct( object ):
 
 	type = "InnerProduct"
 
-	def __init__( self, num_output, activation='linear', bias_term=True, weight=None, bias=None ):
-
+	def __init__( self, num_output, activation='linear', initialization=None, bias_term=True, weight=None, bias=None ):
 		self.num_output = num_output
 		self.bias_term = bias_term
 		self.weight = weight
 		self.bias = bias
 		self.activation = activation
+		self.initialization = initialization
 
 	def to_prototxt( self ):
 		"""Convert the parameters to the string format for the prototxt file."""
@@ -122,12 +122,17 @@ class InnerProduct( object ):
 		           '     num_output: {}\n'.format( self.num_output ) + \
 		           '     bias_term: {}\n'.format( str(self.bias_term).lower() )
 
+		if self.initialization is not None:
+			prototxt += '    weight_filler {\n' + \
+			            '      type: "{}"\n'.format( self.initialization ) + \
+			            '    }\n'
+
 		if weight is not '':
 			prototxt += '    weight_filler {}'.format(weight)
 		if bias is not '':
 			prototxt += '    bias_filler {}'.format(bias)
-
 		prototxt += '  }'
+
 		return prototxt
 
 class Concat( object ):
@@ -151,8 +156,7 @@ class Convolution( object ):
 	type = "Convolution"
 
 	def __init__( self, kernel_h, kernel_w, num_output, stride=1, activation='linear',
-		pad=0, group=1, bias_term=True, weight=None, bias=None ):
-
+		initialization=None, pad=0, group=1, bias_term=True, weight=None, bias=None ):
 		self.num_output = num_output
 		self.kernel_h = kernel_h
 		self.kernel_w = kernel_w
@@ -162,8 +166,9 @@ class Convolution( object ):
 		self.weight = weight
 		self.bias_term = bias_term
 		self.bias = bias
-		self.group = 1
+		self.group = group
 		self.activation = activation
+		self.initialization = initialization
 
 	def to_prototxt( self ):
 		"""Convert the parameters to the string format for the prototxt file."""
@@ -181,6 +186,11 @@ class Convolution( object ):
 		            '    pad_w: {}\n'.format( self.pad_w ) + \
 		            '    group: {}\n'.format( self.group ) + \
 		            '    bias_term: {}\n'.format( str(self.bias_term).lower() )
+
+		if self.initialization is not None:
+			prototxt += '    weight_filler {\n' + \
+			            '      type: {}'.format( self.initialization ) + \
+			            '    }\n'
 
 		if weight is not '':
 			prototxt += '    weight_filler {}'.format(weight)
