@@ -202,7 +202,7 @@ class Model( object ):
 	def fit( self, source=None, gpu=None, iterations=None, snapshot=None, weights=None, suffix='' ):
 		"""Fit the network to the data."""
 
-		command = 'caffe train -solver={}.prototxt'.format( self.policy_name )
+		command = 'caffe train -solver={}.prototxt '.format( self.policy_name )
 
 		if source is not None:
 			if self.nodes == {}:
@@ -222,19 +222,17 @@ class Model( object ):
 
 
 		if gpu is not None:
-			command += '-gpu {}'.format( str(gpu) )
+			command += '-gpu {} '.format( str(gpu) )
 		if iterations is not None:
-			command += '-iterations {}'.format( str(iterations) )
+			command += '-iterations {} '.format( str(iterations) )
 		if snapshot is not None:
-			command += '-snapshot {}'.format( snapshot )
+			command += '-snapshot {} '.format( snapshot )
 		if weights is not None:
-			command += '-weights {}'.format( weights )
+			command += '-weights {} '.format( weights )
 		command += suffix
 
-		print command
 		subprocess.call( command )
 		
-
 	@classmethod
 	def from_prototxts( cls, model, policy=None ):
 		"""Link a model object to existing prototxt files."""
