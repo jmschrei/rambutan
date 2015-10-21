@@ -54,6 +54,7 @@ class Output( object ):
 				prototxt += '  bottom: "{}"\n'.format( bottom )
 		else:
 			prototxt += '  bottom: "{}"\n'.format( bottom )
+		prototxt += '}\n'
 
 		return prototxt
 
