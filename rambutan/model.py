@@ -231,6 +231,7 @@ class Model( object ):
 			command += '-weights {} '.format( weights )
 		command += suffix
 
+		print command
 		subprocess.call( command )
 		
 	@classmethod
