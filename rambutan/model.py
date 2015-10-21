@@ -214,7 +214,7 @@ class Model( object ):
 	def fit( self, source=None, gpu=None, iterations=None, snapshot=None, weights=None, suffix='' ):
 		"""Fit the network to the data."""
 
-		command = 'caffe train solver={}'.format( self.policy_name )
+		command = 'caffe train solver={}.prototxt'.format( self.policy_name )
 
 		if source is not None:
 			if self.nodes == {}:
@@ -243,6 +243,8 @@ class Model( object ):
 			command += '-weights {}'.format( weights )
 		command += suffix
 
+		print command
+		print command.split()
 		subprocess.call( command.split() )
 		
 
