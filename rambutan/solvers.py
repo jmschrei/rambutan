@@ -2,7 +2,7 @@
 # Authors: Jacob Schreiber <jmschreiber91@gmail.com>
 
 """
-Misc additions to the code.
+Solvers and policies.
 """
 
 class Solver( object ):

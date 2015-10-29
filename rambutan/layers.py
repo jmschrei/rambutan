@@ -39,24 +39,6 @@ class Database( object ):
 		       '    backend: {}\n'.format( self.backend ) + \
 		       '  }'
 
-class LMDB( object ):
-	"""An input layer for loading data from LMDB specifically."""
-
-	type = "Data"
-
-	def __init__( self, source, batch_size ):
-		self.source = source
-		self.batch_size = batch_size
-
-	def to_prototxt( self ):
-		"""Convert the parameters to the string format for the prototxt file."""
-
-		return 'data_param {\n' + \
-		       '    source: "{}"\n'.format( self.source ) + \
-		       '    batch_size: {}\n'.format( self.batch_size ) + \
-		       '    backend: LMDB\n' + \
-		       '  }'
-
 class InMemory( object ):
 	"""An input layer for loading data from memory, such as numpy."""
 
