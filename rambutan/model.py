@@ -311,19 +311,30 @@ class Model( object ):
 
 		subprocess.call( command.split() )
 
-	def predict( self, X, weights ):
+	def predict( self, X, weights, gpu=None ):
 		"""Fit to some data by taking in two numpy arrays and getting a dictionary.
 
 		Parameters
 		----------
 		X: <numpy.ndarray> A 4D array of data, formatted as (n_samples, n_channels,
 			height, width).
+		
+		weights: <str> Path to the trained weights of the model (a .caffemodel file)
+
+		gpu: <None or int> If None, run in CPU mode, otherwise an integer specifying
+		     the device to make the prediction on.
 
 		Return
 		------
-		y: <dict> A dictionary of layer name: layer values for each sample, of the
-		format (n_samples, n_channels, height, width).
+		y: <dict> A dictionary of layer name: layer values for each sample. The shape
+	       depends on the layers, with convolutionary layers having the shape
+	       (n_samples, n_channels, height, width) and inner product layers having
+	       the shape (n_samples, output, input)
 		"""
+
+		if gpu is not None:
+			caffe.set_device( gpu )
+			caffe.set_mode_gpu()
 
 		model = caffe.Net( self.name, weights )
 
