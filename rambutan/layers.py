@@ -155,7 +155,7 @@ class Convolution( object ):
 
 	type = "Convolution"
 
-	def __init__( self, kernel_h, kernel_w, num_output, stride=1, activation='linear',
+	def __init__( self, num_output, kernel_h, kernel_w, stride=1, activation='linear',
 		initialization=None, pad=0, group=1, bias_term=True, weight=None, bias=None ):
 		self.num_output = num_output
 		self.kernel_h = kernel_h

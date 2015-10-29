@@ -36,10 +36,11 @@ class Output( object ):
 
 	name = "Output"
 
-	def __init__( self, type, name, bottom ):
+	def __init__( self, type, name, bottom, phase=None ):
 		self.type = type
 		self.name = name
-		self.bottom = bottom 
+		self.bottom = bottom
+		self.phase = phase
 
 	def to_prototxt( self ):
 		"""Convert the output to the string format for the prototxt file."""
@@ -54,6 +55,11 @@ class Output( object ):
 				prototxt += '  bottom: "{}"\n'.format( bottom )
 		else:
 			prototxt += '  bottom: "{}"\n'.format( bottom )
+
+		if self.phase is not None:
+			prototxt += '  include {\n' + \
+			            '    phase: {}\n'.format( self.phase ) + \
+			            '  }\n'
 		prototxt += '}\n'
 
 		return prototxt
@@ -159,7 +165,7 @@ class Model( object ):
 		self.nodes[name] = node
 		self.ordered_nodes.append( node )
 
-	def add_output( self, type, name, input, label='label' ):
+	def add_output( self, type, name, input, label='label', phase=None ):
 		"""Add a node which represents an output of the model."""
 
 		if isinstance( input, list ):
@@ -167,7 +173,7 @@ class Model( object ):
 		else:
 			input = [input, label]
 
-		node = Output( type, name, bottom=input )
+		node = Output( type, name, bottom=input, phase=phase )
 		self.nodes[name] = node
 		self.ordered_nodes.append( node )
 
