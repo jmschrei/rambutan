@@ -12,6 +12,7 @@ y = numpy.ones(1024)
 y[:500] = 0
 
 model.fit( X, y )
+print model.predict( X )
 
 
 
