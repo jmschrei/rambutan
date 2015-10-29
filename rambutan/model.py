@@ -311,7 +311,7 @@ class Model( object ):
 
 		subprocess.call( command.split() )
 
-	def predict( self, X ):
+	def predict( self, X, weights ):
 		"""Fit to some data by taking in two numpy arrays and getting a dictionary.
 
 		Parameters
@@ -325,7 +325,7 @@ class Model( object ):
 		format (n_samples, n_channels, height, width).
 		"""
 
-		model = caffe.Net( self.name, self.policy_name )
+		model = caffe.Net( self.name, weights )
 
 		if isinstance(X, numpy.ndarray):
 			in_layer = self.nodes[self.input_names[0]]
