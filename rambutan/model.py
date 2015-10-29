@@ -229,8 +229,8 @@ class Model( object ):
 			command += '-weights {} '.format( weights )
 		command += suffix
 
-		print command
-		subprocess.call( command )
+		print command.split()
+		subprocess.call( command.split() )
 		
 	@classmethod
 	def from_prototxts( cls, model, policy=None ):
