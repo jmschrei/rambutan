@@ -33,7 +33,7 @@ class Solver( object ):
 		if self.stepsize is not None:
 			prototxt += 'stepsize: {}\n'.format( self.stepsize )
 
-		prototxt += 'lr_policy: "{}"'.format( self.policy )
+		prototxt += 'lr_policy: "{}"\n'.format( self.policy )
 		for key, val in self.kwargs.iteritems():
 			prototxt += '{}: {}\n'.format( key, val )
 
