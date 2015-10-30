@@ -335,13 +335,14 @@ class Model( object ):
 	       the shape (n_samples, output, input)
 		"""
 
+		name = self.name + ".prototxt"
 		weights = None or "_iter_{}.caffemodel".format( self.iterations )
 
 		if gpu is not None:
 			caffe.set_device( gpu )
 			caffe.set_mode_gpu()
 
-		model = caffe.Net( self.name, weights, caffe.TEST )
+		model = caffe.Net( name, weights, caffe.TEST )
 
 		if isinstance(X, numpy.ndarray):
 			in_layer = self.nodes[self.input_names[0]]
