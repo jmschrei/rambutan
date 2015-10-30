@@ -341,7 +341,7 @@ class Model( object ):
 			caffe.set_device( gpu )
 			caffe.set_mode_gpu()
 
-		model = caffe.Net( self.name, weights )
+		model = caffe.Net( self.name, weights, caffe.TEST )
 
 		if isinstance(X, numpy.ndarray):
 			in_layer = self.nodes[self.input_names[0]]
