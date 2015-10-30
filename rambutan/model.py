@@ -147,6 +147,7 @@ class Model( object ):
 		self.ordered_nodes = []
 		self.input_names = []
 		self.nodes = {}
+		self.iterations = 10000
 
 	def add_node( self, layer, name, input, params=None, concat_dim=1 ):
 		"""Add a node to the graph that is this model."""
@@ -258,6 +259,8 @@ class Model( object ):
 			raise ValueError("gpu must be either the integer id, or a string of comma "
 				             "separated numbers (e.g. '2,3')")
 
+		self.iterations = iterations or self.iterations
+
 		# Initial command
 		command = 'caffe train -solver={}.prototxt '.format( self.policy_name )
 
@@ -300,9 +303,9 @@ class Model( object ):
 
 
 		if gpu is not None:
-			command += '-gpu {} '.format( str(gpu) )
+			command += '-gpu {} '.format( gpu )
 		if iterations is not None:
-			command += '-iterations {} '.format( str(iterations) )
+			command += '-iterations {} '.format( self.iterations )
 		if snapshot is not None:
 			command += '-snapshot {} '.format( snapshot )
 		if weights is not None:
@@ -332,7 +335,7 @@ class Model( object ):
 	       the shape (n_samples, output, input)
 		"""
 
-		weights = None or "_iter_{}.caffemodel"
+		weights = None or "_iter_{}.caffemodel".format( self.iterations )
 
 		if gpu is not None:
 			caffe.set_device( gpu )
