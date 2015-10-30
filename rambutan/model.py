@@ -311,7 +311,7 @@ class Model( object ):
 
 		subprocess.call( command.split() )
 
-	def predict( self, X, weights, gpu=None ):
+	def predict( self, X, weights=None, gpu=None ):
 		"""Fit to some data by taking in two numpy arrays and getting a dictionary.
 
 		Parameters
@@ -331,6 +331,8 @@ class Model( object ):
 	       (n_samples, n_channels, height, width) and inner product layers having
 	       the shape (n_samples, output, input)
 		"""
+
+		weights = None or "_iter_{}.caffemodel"
 
 		if gpu is not None:
 			caffe.set_device( gpu )
