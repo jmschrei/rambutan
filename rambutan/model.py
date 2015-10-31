@@ -141,9 +141,10 @@ class Model( object ):
 
 	name = 'Model'
 
-	def __init__( self, name='caffe-model', policy_name=None ):
+	def __init__( self, name='caffe-model', policy=None, weights=None ):
 		self.name = name
-		self.policy_name = policy_name or name + '_policy'
+		self.policy = policy or name + '_policy'
+		self.weights = weights
 		self.ordered_nodes = []
 		self.input_names = []
 		self.nodes = {}
@@ -192,7 +193,7 @@ class Model( object ):
 		with open( self.name + '.prototxt', 'w' ) as model:
 			model.write( self.to_prototxt() )
 
-		with open( self.policy_name + '.prototxt', 'w' ) as policy:
+		with open( self.policy + '.prototxt', 'w' ) as policy:
 			policy.write( 'net: "{}.prototxt"\n'.format( self.name ) )
 			policy.write( solver.to_prototxt() )
 			for key, val in kwargs.iteritems():
@@ -262,7 +263,7 @@ class Model( object ):
 		self.iterations = iterations or self.iterations
 
 		# Initial command
-		command = 'caffe train -solver={}.prototxt '.format( self.policy_name )
+		command = 'caffe train -solver={}.prototxt '.format( self.policy)
 
 		# If we're being passed new data, we have to modify the prototxt file at
 		# the very minimum, and possibly make a new database.
@@ -336,7 +337,7 @@ class Model( object ):
 		"""
 
 		name = self.name + ".prototxt"
-		weights = None or "_iter_{}.caffemodel".format( self.iterations )
+		weights = weights or self.weights or "_iter_{}.caffemodel".format( self.iterations )
 
 		if gpu is not None:
 			caffe.set_device( gpu )
@@ -347,23 +348,23 @@ class Model( object ):
 		if isinstance(X, numpy.ndarray):
 			in_layer = self.nodes[self.input_names[0]]
 
-			model.blobs[ in_layer ].reshape( X.shape )
-			model.blobs[ in_layer ].data[...] = X
+			model.blobs[ in_layer.name ].reshape( X.shape )
+			model.blobs[ in_layer.name ].data[...] = X
 
 		elif isinstance(X, dict):
 			for name, data in X.items():
 				in_layer = self.nodes[name]
 
-				model.blobs[ in_layer ].reshape( data.shape )
-				model.blobs[ in_layer ].data[...] = data
+				model.blobs[ in_layer.name ].reshape( data.shape )
+				model.blobs[ in_layer.name ].data[...] = data
 
 		out = model.forward()
 		return out 
 		
 	@classmethod
-	def from_prototxt( cls, model, policy=None ):
+	def from_prototxt( cls, model, policy=None, weights=None ):
 		"""Link a model object to existing prototxt files."""
 
 		name = model.replace('.prototxt', '')
-		policy_name = policy.replace('.prototxt', '') if policy is not None else None
-		return cls( name, policy_name=policy_name )
+		policy = policy.replace('.prototxt', '') if policy is not None else None
+		return cls( name, policy, weights )
