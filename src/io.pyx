@@ -13,7 +13,6 @@ cimport numpy
 from mxnet.io import *
 
 numpy.random.seed(0)
-random.seed(0)
 
 def cross_chromosome_dict(contacts):
 	d = {}
