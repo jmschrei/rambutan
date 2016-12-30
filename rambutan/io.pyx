@@ -10,7 +10,12 @@ for training a Rambutan model.
 import numpy
 cimport numpy
 
-from mxnet.io import *
+try:
+	from mxnet.io import DataIter, DataBatch
+	from mxnet.ndarray import array
+except (OSError, ImportError) as e:
+	print("Warning: mxnet not properly imported with message {}".format(e.args[0]))
+	DataIter, DataBatch, array = object, object, object
 
 numpy.random.seed(0)
 
@@ -57,10 +62,10 @@ class TrainingGenerator(DataIter):
 		self.use_dist     = use_dist
 		self.min_dist     = min_dist
 		self.max_dist     = max_dist
-		self.batch_size = batch_size
-		self.data_shapes = {'x1seq' : (1, 1000, 4), 'x2seq' : (1, 1000, 4), 
+		self.batch_size   = batch_size
+		self.data_shapes  = {'x1seq' : (1, 1000, 4), 'x2seq' : (1, 1000, 4), 
 			'x1dnase' : (1, 1000, 8), 'x2dnase' : (1, 1000, 8), 
-			'distance' : (191,)}
+			'distance' : (100,)}
 
 	@property
 	def provide_data(self):
@@ -87,7 +92,7 @@ class TrainingGenerator(DataIter):
 				 'x2seq' : numpy.zeros((batch_size, 1000, 4)),
 				 'x1dnase' : numpy.zeros((batch_size, 1000, 8)),
 				 'x2dnase' : numpy.zeros((batch_size, 1000, 8)),
-				 'distance' : numpy.zeros((batch_size, 191))}
+				 'distance' : numpy.zeros((batch_size, 100))}
 
 		labels = { 'softmax_label' : numpy.zeros(batch_size) }
 
@@ -119,11 +124,13 @@ class TrainingGenerator(DataIter):
 					data['x2dnase'][i] = dnases[c][mid2-500:mid2+500]
 
 				if self.use_dist:
-					distance = mid2 - mid1 - self.min_dist
-					for k in range(100):
-						data['distance'][i][k] = 0 if distance >= k*1000 else 1
-					for k in range(91):
-						data['distance'][i][k+100] = 0 if distance >= 100000 + k*10000 else 1
+					distance = mid2 - mid1
+					for k in range(50):
+						data['distance'][i][k] = 0 if distance >= 50000 + k*1000 else 1
+					for k in range(40):
+						data['distance'][i][k+50] = 0 if distance >= 100000 + k*10000 else 1
+					for k in range(10):
+						data['distance'][i][k+90] = 0 if distance >= 500000 + k*100000 else 1
 
 				i += 1
 
@@ -158,10 +165,10 @@ class ValidationGenerator(DataIter):
 		self.use_dist     = use_dist
 		self.min_dist     = min_dist
 		self.max_dist     = max_dist
-		self.batch_size = batch_size
-		self.data_shapes = {'x1seq' : (1, 1000, 4), 'x2seq' : (1, 1000, 4), 
+		self.batch_size   = batch_size
+		self.data_shapes  = {'x1seq' : (1, 1000, 4), 'x2seq' : (1, 1000, 4), 
 			'x1dnase' : (1, 1000, 8), 'x2dnase' : (1, 1000, 8), 
-			'distance' : (191,)}
+			'distance' : (100,)}
 
 	@property
 	def provide_data(self):
@@ -178,7 +185,7 @@ class ValidationGenerator(DataIter):
 		cdef numpy.ndarray dnase = self.dnase
 		cdef dict data, labels
 		cdef int i, j = 0, k, batch_size = self.batch_size, l
-		cdef int mid1, mid2, distance, last_mid1, last_mid2
+		cdef int mid1, mid2, distance
 		cdef list data_list, label_list
 		cdef str key
 
@@ -186,7 +193,7 @@ class ValidationGenerator(DataIter):
 				 'x2seq' : numpy.zeros((batch_size, 1000, 4)),
 				 'x1dnase' : numpy.zeros((batch_size, 1000, 8)),
 				 'x2dnase' : numpy.zeros((batch_size, 1000, 8)),
-				 'distance' : numpy.zeros((batch_size, 191))
+				 'distance' : numpy.zeros((batch_size, 100))
 		}
 
 		labels = { 'softmax_label' : numpy.zeros(batch_size) }
@@ -224,15 +231,15 @@ class ValidationGenerator(DataIter):
 					data['x2dnase'][i] = dnase[mid2-500:mid2+500]
 
 				if self.use_dist:
-					distance = mid2 - mid1 - self.min_dist
-					for k in range(100):
-						data['distance'][i][k] = 0 if distance >= k*1000 else 1
-					for k in range(91):
-						data['distance'][i][k+100] = 0 if distance >= 100000 + k*10000 else 1
+					distance = mid2 - mid1
+					for k in range(50):
+						data['distance'][i][k] = 0 if distance >= 50000 + k*1000 else 1
+					for k in range(40):
+						data['distance'][i][k+50] = 0 if distance >= 100000 + k*10000 else 1
+					for k in range(10):
+						data['distance'][i][k+90] = 0 if distance >= 500000 + k*100000 else 1
 
 				i += 1
-				last_mid1 = mid1
-				last_mid2 = mid2
 
 			data['x1seq'] = data['x1seq'].reshape(batch_size, 1, 1000, 4)
 			data['x2seq'] = data['x2seq'].reshape(batch_size, 1, 1000, 4)

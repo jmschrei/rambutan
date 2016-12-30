@@ -4,8 +4,8 @@ from Cython.Build import cythonize
 import numpy
 
 extensions = [
-            Extension( "src.*", 
-                       [ "src/*.pyx" ], 
+            Extension( "rambutan.*", 
+                       [ "rambutan/*.pyx" ], 
                        include_dirs=[numpy.get_include()] )
     ]
 
@@ -16,7 +16,7 @@ setup(
     version='0.4.0',
     author='Jacob Schreiber',
     author_email='jmschr@cs.washington.edu',
-    packages=['rambutan'],
+    packages = ['rambutan'],
     license='LICENSE.txt',
     description='Rambutan is a package for the analysis of the 3D structure of the genome.',
     ext_modules=extensions,
