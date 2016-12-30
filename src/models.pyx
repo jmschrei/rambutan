@@ -10,6 +10,9 @@ using a MxNet model.
 import logging
 import mxnet as mx
 
+import numpy
+cimport numpy
+
 from mxnet.symbol import Pooling, Variable, Flatten, Concat
 from mxnet.symbol import SoftmaxOutput, FullyConnected, Dropout
 from mxnet.io import *
