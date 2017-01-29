@@ -2,6 +2,8 @@
 
 Rambutan is a deep convolutional neural network which predicts Hi-C contacts. In particular, it takes in nucleotide sequence and DNaseI sensitivity from two loci and predicts whether the pair engages in a significant contact as defined by Fit-Hi-C. If you've previously used Fit-Hi-C to assign statistical confidence estimates to identify relevant contacts in experimentally acquired Hi-C contact maps, you can now use Rambutan to do that for human cell types which don't have Hi-C data! Rambutan is trained off the deeply sequenced GM12878 experiment from the Rao 2014 paper and so can make predictions at 1kb resolution, far higher than most experimentally acquired contact maps.  
 
+See the manuscript <a href="http://biorxiv.org/content/early/2017/01/28/103614>here</a>
+
 ## Dependencies
 
 Rambutan is written to be used in Python 2.7, but should work for Python 3 as well. Please open an issue on the issue tracker if this is not the case.
