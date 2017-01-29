@@ -1,26 +1,28 @@
 # Rambutan
 
-Rambutan is a deep convolutional neural network which predicts Hi-C contacts. In particular, it takes in nucleotide sequence and DNaseI sensitivity from two loci and predicts whether the pair engages in a significant contact as defined by Fit-Hi-C. If you've previously used Fit-Hi-C to assign statistical confidence estimates to identify relevant contacts in experimentally acquired Hi-C contact maps, you can now use Rambutan to do that for human cell types which don't have Hi-C data! Rambutan is trained off the deeply sequenced GM12878 experiment from the Rao 2014 paper and so can make predictions at 1kb resolution, far higher than most experimentally acquired contact maps.  
+Rambutan is a deep convolutional neural network which predicts 3D chromatin architecture using only nucleotide sequence and DNaseI sensitivity. Specifically it predicts whether a pair of 1kb loci engage in a statistically significant contact with respect to the genomic distance effect as defined by Fit-Hi-C. If you've previously used Fit-Hi-C to identify relevant contacts in experimentally acquired Hi-C contact maps, you can now use Rambutan to do that for human cell types which don't have Hi-C data! Rambutan is trained off the deeply sequenced GM12878 experiment from the Rao 2014 paper and so can make predictions at 1kb resolution, far higher than most experimentally acquired contact maps.  
 
 Read the manuscript here! <a href="http://biorxiv.org/content/early/2017/01/28/103614">Nucleotide sequence and DNaseI sensitivity are predictive of 3D chromatin architecture</a>
+
+The code used to recreate most figures in the paper can be found in Biological_Validation.ipynb. 
 
 ## Dependencies
 
 Rambutan is written to be used in Python 2.7, but should work for Python 3 as well. Please open an issue on the issue tracker if this is not the case.
 
-Rambutan requires sklearn, joblib, numpy, progresbar, mxnet, and cython. mxnet is a deep learning package and may have complications in installation due to its need to both connect directly to hardware such as GPUs and have specialized software to improve speed. The installation of both mxnet and cython may be more difficult than a simple pip install. Downloading the Anaconda python distribution will likely solve the cython issue, and the mxnet installation is well documented on their website.
+Rambutan requires sklearn, joblib, numpy, progressbar, mxnet, and cython. Of these dependencies, the first four can easily be installed using pip. The last two may be more tricky to get installed due to their efficiency needs. In particular, mxnet is a deep learning package and so requires cuda and cudnn for installation. Please see the <a href="http://mxnet.io/get_started/setup.html">mxnet installation guide</a> for instructions on how to install mxnet. Cython requires a working C++ compiler, which should not be a problem if you are on Ubuntu or a mac (gcc and clang both work well). If you are on a Windows machine you will have to download one. For Python 2 this minimal version of Visual Studio 2008 works well: https://www.microsoft.com/en-us/download/details.aspx?id=44266. For Python 3 this version of the Visual Studio Build Tools has been reported to work: http://go.microsoft.com/fwlink/?LinkId=691126. 
+
+Using the Anaconda distribution may help in the in installation of these dependencies.
 
 ## Installation
 
-Currently you can install Rambutan by cloning this repo and installing from source using the following commands:
+Rambutan can be installed once all of the dependencies are successfully installed. Currently you can install Rambutan by cloning this repo and installing from source using the following commands:
 
 ```
 git clone https://github/com/jmschrei/rambutan
 cd rambutan
 python setup.py install
 ```
-
-Since Rambutan does require cython you will need a working C++ compiler. If you are on Ubuntu or Mac this should not be a problem (gcc and clang both work well), but if you are on Windows you may have to download one. For Python 2 this minimal version of Visual Studio 2008 works well: https://www.microsoft.com/en-us/download/details.aspx?id=44266. For Python 3 this version of the Visual Studio Build Tools has been reported to work: http://go.microsoft.com/fwlink/?LinkId=691126
 
 ## Usage
 
