@@ -217,8 +217,6 @@ class Rambutan(object):
 			use_seq=self.use_seq, use_dnase=self.use_dnase, 
 			use_dist=self.use_dist)
 
-		X_train = mx.io.PrefetchingIter(X_train)
-
 		if validation:
 			X_validation = ValidationGenerator(validation_sequence, 
 				validation_dnase, validation_contacts, validation_regions,
