@@ -56,7 +56,7 @@ def Arm(seq, dnase):
 	x = Convolution(x, 64, (3, 1))
 	x = Convolution(x, 64, (3, 1))
 	x = Flatten(Pooling(x, kernel=(107, 1), stride=(107, 1), pool_type='max'))
-	x = Dense(x, 256)
+	x = Dense(x, 64)
 	return x
 
 
@@ -70,10 +70,10 @@ def RambutanSymbol(**kwargs):
 	x2 = Arm(x2seq, x2dnase)
 
 	xd = Variable(name="distance")
-	xd = Dense(xd, 64)
+	xd = Dense(xd, 32)
 
 	x = Concat(x1, x2, xd)
-	x = Dense(x, 256)
+	x = Dense(x, 64)
 	x = mx.symbol.FullyConnected(x, num_hidden=2)
 	y = SoftmaxOutput(data=x, name='softmax')
 	model = mx.model.FeedForward(symbol=y, **kwargs)

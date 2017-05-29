@@ -19,11 +19,11 @@ except (OSError, ImportError) as e:
 
 numpy.random.seed(0)
 
-def cross_chromosome_dict(contacts):
+def contact_dict(contacts):
 	d = {}
-	for chromosome, mid1, mid2, q in contacts:
-		d[chromosome, mid1, mid2] = q
-		d[chromosome, mid2, mid1] = q
+	for chromosome, mid1, mid2 in contacts:
+		d[chromosome, mid1, mid2] = 1
+		d[chromosome, mid2, mid1] = 1
 
 	return d
 
@@ -54,7 +54,7 @@ class TrainingGenerator(DataIter):
 		self.sequence     = sequences
 		self.dnases       = dnases
 		self.contacts     = contacts
-		self.contact_dict = cross_chromosome_dict(contacts)
+		self.contact_dict = contact_dict(contacts)
 		self.regions      = regions
 		self.n            = len(sequences)
 		self.use_seq      = use_seq
@@ -199,7 +199,7 @@ class ValidationGenerator(DataIter):
 		labels = { 'softmax_label' : numpy.zeros(batch_size) }
 
 		j = 0
-		l = self.contacts.shape[0] - batch_size*2
+		l = self.contacts.shape[0] - batch_size/2
 		while j < l:
 			data['x1seq'] = data['x1seq'].reshape(batch_size, 1000, 4)
 			data['x2seq'] = data['x2seq'].reshape(batch_size, 1000, 4)
