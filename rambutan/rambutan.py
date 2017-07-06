@@ -194,12 +194,13 @@ class Rambutan(object):
 
 	def fit(self, sequence, dnase, contacts, regions, validation_sequence=None, 
 		validation_dnase=None, validation_contacts=None, validation_regions=None,
-		ctxs=[0], eval_metric=roc_auc_score):
+		ctxs=[0], eval_metric=roc_auc_score, symbol=None):
 
 		import mxnet as mx
 		from .models import RambutanSymbol
 
-		model = RambutanSymbol(ctx=map(mx.gpu, ctxs),
+		symbol = RambutanSymbol if symbol is None else symbol
+		model = symbol(ctx=map(mx.gpu, ctxs),
 			                   epoch_size=self.epoch_size,
 			                   num_epoch=self.num_epoch,
 			                   learning_rate=self.learning_rate,
@@ -212,12 +213,22 @@ class Rambutan(object):
 					  validation_contacts is not None and
 					  validation_regions is not None)
 
-		X_train = TrainingGenerator(sequence, dnase, contacts, regions,
+		training_contacts = numpy.empty((contacts.shape[0], 3), dtype='float64')
+		training_contacts[:,0] = [int(chrom[3:])-1 for chrom in contacts['chr1']]
+		training_contacts[:,1] = contacts['fragmentMid1'].values
+		training_contacts[:,2] = contacts['fragmentMid2'].values
+
+		print training_contacts.shape[0], "training contacts"
+ 
+		X_train = TrainingGenerator(sequence, dnase, training_contacts, regions,
 			self.batch_size, min_dist=self.min_dist, max_dist=self.max_dist,
 			use_seq=self.use_seq, use_dnase=self.use_dnase, 
 			use_dist=self.use_dist)
 
 		if validation:
+			validation_contacts = validation_contacts[['fragmentMid1', 'fragmentMid2']].values
+			print validation_contacts.shape[0], "validation contacts"
+
 			X_validation = ValidationGenerator(validation_sequence, 
 				validation_dnase, validation_contacts, validation_regions,
 				batch_size=self.batch_size, min_dist=self.min_dist, 

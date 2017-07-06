@@ -178,6 +178,134 @@ def extract_regions(sequence):
 	regions = numpy.array([i*1000 + 500 for i in range(n) if sums[i] == 1000])
 	return regions
 
+
+def extract_contacts(contacts, alpha=0.01, min_distance=50000, max_distance=1000000):
+	"""Extract the statistically significant contacts
+
+	Extract all contacts that have a p-value <= alpha and are within a certain
+	band in the chromosome. This is useful for drastically reducing the size of
+	the dataset. The columns must be named as follows:
+
+	chr1	fragmentMid1	chr2	fragmentMid2	p-value	q-value
+
+	Parameters
+	----------
+	contacts : pandas.DataFrame
+		The data formatted properly in a dataframe. 
+
+	alpha : double, optional
+		The p-value threshold to filter by. Default is 0.01.
+
+	min_distance : int, optional
+		The minimum distance that a contact must be within.
+
+	max_distance : int, optional
+		The maximum distance that a contact must be within.
+
+	Returns
+	-------
+	contacts : pandas.DataFrame
+		The filtered contacts within a certain threshold.
+
+	n_region_pairs : int
+		The number of region pairs in the band
+	"""
+
+	# Filter out the contacts that have a p-value below the threshold
+	contacts = contacts.loc[contacts['p-value'] < alpha]
+
+	mid1 = contacts['fragmentMid1']
+	mid2 = contacts['fragmentMid2']
+
+	# Calculate distances
+	distances = mid2 - mid1
+
+	# Filter out points which aren't in the band
+	idxs = (distances <= max_distance) & (distances >= min_distance)
+	contacts = contacts.loc[idxs]
+
+	# Identify the regions within the contact map
+	regions = numpy.concatenate((mid1, mid2))
+	regions = numpy.unique(regions)
+	return contacts, regions
+
+
+def benjamini_hochberg(numpy.ndarray p_values, long n):
+	"""Run the benjamini hochberg procedure on a vector of -sorted- p-values.
+
+	Runs the procedure on a vector of p-values, and returns the q-values for
+	each point.
+
+	Parameters
+	----------
+	p_values : numpy.ndarray
+		A vector of p values
+
+	n : int
+		The number of tests which have been run.
+
+	Returns
+	-------
+	q_values : numpy.ndarray
+		The q-values for each point.
+	"""
+
+	p_values = p_values.astype('float64')
+
+	cdef long i, d = p_values.shape[0]
+	cdef double q_value, prev_q_value = 0.0
+
+	cdef numpy.ndarray q_values = numpy.empty(d, dtype='float64')
+
+	for i in range(d):
+		q_value = p_values[i] * n / (i+1)
+		q_value = min(q_value, 1)
+		q_value = max(q_value, prev_q_value)
+
+		q_values[i] = q_value
+		prev_q_value = q_value
+
+	return q_values
+
+
+def count_band_regions(numpy.ndarray regions, int min_distance, int max_distance):
+	"""Calculate the number of regions in the band.
+
+	This will iterate over all region pairs and identify the number of region
+	pairs within the given band. This corresponds to the number of tests.
+
+	Parameters
+	----------
+	regions : numpy.ndarray
+		The mappable regions in a chromosome.
+
+	min_distance : int, optional
+		The minimum distance that a contact must be within.
+
+	max_distance : int, optional
+		The maximum distance that a contact must be within.
+
+	Returns
+	-------
+	n : int
+		The number of region pairs in the band.
+	"""
+
+	regions = regions.astype('int32')
+
+	cdef int* regions_ptr = <int*> regions.data
+	cdef int n_regions = regions.shape[0], i, j
+	cdef int dist
+	cdef long n = 0
+
+	for i in range(n_regions):
+		for j in range(i):
+			if min_distance <= regions_ptr[i] - regions_ptr[j] <= max_distance:
+				n += 1
+
+	return n
+
+
 def downsample(numpy.ndarray x, numpy.ndarray regions, int min_dist=50000, \
 	int max_dist=1000000):
 	"""Downsample a 1kb resolution matrix to a 5kb resolution matrix.
@@ -227,6 +355,7 @@ def downsample(numpy.ndarray x, numpy.ndarray regions, int min_dist=50000, \
 						y[l1, l2] = max(y[l1, l2], x[k1 + i, k2 + j])
 
 	return y
+
 
 def insulation_score(numpy.ndarray x, int size=200):
 	"""Calculate the insulation score for a given matrix of any resolution.
