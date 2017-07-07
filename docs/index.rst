@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Rambutan
-========
+Home
+====
 
 Rambutan is a package for the prediction of the 3D structure of human cell types. It focuses on the prediction of Hi-C contact maps, but rather than trying to predict the number of contacts that a pair of loci engage in, it instead predicts whether the contact is statistically significant with respect to their genomic distance. This genomic distance effect is extremely important as pairs of loci that are close together are very likely to be in contact simply due to physics as opposed to biological importance, whereas long-range contacts are typically enriched for important biological interactions. The predictions are made using a convolutional neural network that takes in nucleotide sequence and DNaseI sensitivity from two loci spanning 1000 nucleotides. The goal is to serve as a substitute for both running an experiment to collect Hi-C data for a cell type and for running Fit-Hi-C on the data afterwards.
 
@@ -20,3 +20,7 @@ Comments and suggestions are always greatly appreciated.
 
    self
    installation.rst
+   faq.rst
+   rambutan.rst
+   io.rst
+   utils.rst
