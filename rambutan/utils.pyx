@@ -38,7 +38,7 @@ def fasta_to_dense(filename, bint verbose=True):
 		fasta.readline()
 
 		for line in fasta:
-			lines.append(line[:-1])
+			lines.append(line.strip("\r\n"))
 
 		sequence = ''.join(lines).upper()
 

@@ -91,7 +91,7 @@ def predict_task(name, iteration, ctx, n_jobs, numpy.ndarray sequence,
 	model = mx.model.FeedForward.load(name, iteration, ctx=mx.gpu(ctx))
 	
 	if verbose:
-		print "GPU [{}] -- model loaded".format(ctx)
+		print("GPU [{}] -- model loaded".format(ctx))
 
 	with open('.rambutan.predictions.{}.txt'.format(ctx), 'w') as outfile:
 		for mid1 in regions:
@@ -152,11 +152,10 @@ def predict_task(name, iteration, ctx, n_jobs, numpy.ndarray sequence,
 					predictions *= 0
 
 					if verbose:
-						print
-						print "GPU [{}] -- {} samples predicted and output".format(ctx, tot)
+						print("GPU [{}] -- {} samples predicted and output".format(ctx, tot))
 
 		if verbose:
-			print "GPU [{}] -- {} samples loaded, predicting...".format(ctx, k),
+			print("GPU [{}] -- {} samples loaded, predicting...".format(ctx, k))
 
 		data['x1seq'] = data['x1seq'].reshape((10240, 1, 1000, 4))[:k]
 		data['x2seq'] = data['x2seq'].reshape((10240, 1, 1000, 4))[:k]
@@ -172,5 +171,4 @@ def predict_task(name, iteration, ctx, n_jobs, numpy.ndarray sequence,
 			outfile.write( "{} {} {}\n".format(mid1, mid2, y) )
 
 		if verbose:
-			print
-			print "GPU [{}] -- {} samples predicted and output".format(ctx, tot)
+			print("\nGPU [{}] -- {} samples predicted and output".format(ctx, tot))
