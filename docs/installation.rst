@@ -5,7 +5,7 @@ Installation
 
 Installation of Rambutan is complicated by two of its dependencies-- mxnet and cython. If you have these two packages installed, then all you need to do is download the current code with the following commands:
 
-.. code-block::
+.. code-block:: bash
 
 	git clone https://github.com/jmschrei/rambutan
 	cd rambutan
