@@ -4,7 +4,11 @@
 
 import os, numpy
 
-from sklearn.metrics import roc_auc_score
+try:
+	from sklearn.metrics import roc_auc_score
+except:
+	roc_auc_score = 'acc'
+
 from joblib import Parallel, delayed
 
 from .io import TrainingGenerator, ValidationGenerator
