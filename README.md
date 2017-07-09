@@ -1,6 +1,6 @@
 # Rambutan
 
-[![Documentation Status](https://readthedocs.org/projects/rambutan-py/badge/?version=latest)](http://rambutan-py.readthedocs.io/en/latest/?badge=latest)
+[![Travis-CI](https://travis-ci.org/jmschrei/rambutan.svg?branch=master)](https://travis-ci.org/jmschrei/rambutan.svg?branch=master) [![Documentation Status](https://readthedocs.org/projects/rambutan-py/badge/?version=latest)](http://rambutan-py.readthedocs.io/en/latest/?badge=latest)
 
 Rambutan is a deep convolutional neural network which predicts 3D chromatin architecture using only nucleotide sequence and DNaseI sensitivity. Specifically it predicts whether a pair of 1kb loci engage in a statistically significant contact with respect to the genomic distance effect as defined by Fit-Hi-C. If you've previously used Fit-Hi-C to identify relevant contacts in experimentally acquired Hi-C contact maps, you can now use Rambutan to do that for human cell types which don't have Hi-C data! Rambutan is trained off the deeply sequenced GM12878 experiment from the Rao 2014 paper and so can make predictions at 1kb resolution, far higher than most experimentally acquired contact maps.  
 
