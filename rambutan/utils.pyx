@@ -10,11 +10,9 @@ import numpy
 import pandas
 import time
 
-from progressbar import ProgressBar
-
 cimport numpy
 
-def fasta_to_dense(filename, bint verbose=True):
+def fasta_to_dense(filename):
 	"""Translate the sequence from a file to a one hot encoded dense array.
 
 	Parameters
@@ -43,16 +41,9 @@ def fasta_to_dense(filename, bint verbose=True):
 		sequence = ''.join(lines).upper()
 
 		n = len(sequence)
-		array = numpy.zeros((n, 4))
-
-		if verbose:
-			pbar = ProgressBar(maxval=n).start()
+		array = numpy.zeros((n, 4), dtype='int8')
 
 		for i in range(n):
-			if i % 1000000 == 0:
-				if verbose:
-					pbar.update(i)
-
 			if sequence[i] == 'A':
 				array[i, 0] = 1
 			elif sequence[i] == 'C':
@@ -62,12 +53,10 @@ def fasta_to_dense(filename, bint verbose=True):
 			elif sequence[i] == 'T':
 				array[i, 3] = 1
 
-	if verbose:
-		pbar.finish()
 	return array
 
 
-def bedgraph_to_dense(filename, bint verbose=True):
+def bedgraph_to_dense(filename):
 	"""Read a bedgraph file and return a dense numpy array.
 
 	This will read in an arbitrary bedgraph file and turn it into a dense
@@ -92,21 +81,13 @@ def bedgraph_to_dense(filename, bint verbose=True):
 	n = data[2][-1]
 	array = numpy.zeros(n)
 
-	if verbose:
-		pbar = ProgressBar(maxval=data.shape[0]).start()
-
 	for i, (_, start, end, value) in data.iterrows():
 		array[start:end] = value
 
-		if i % 1000 == 0 and verbose:
-			pbar.update(i)
-
-	if verbose:
-		pbar.finish()
 	return array
 
 
-def encode_dnase(dnase, bint verbose=True):
+def encode_dnase(dnase):
 	"""Take in an array of real DNase values and binary encode the log.
 
 	This transforms the fold change value to the log fold value and then
@@ -136,22 +117,14 @@ def encode_dnase(dnase, bint verbose=True):
 	cdef int i, value, n = dnase.shape[0]
 	cdef numpy.ndarray encoded_dnase = numpy.zeros((n, 8), dtype='int8')
 
-	if verbose:
-		pbar = ProgressBar(maxval=n).start()
 
 	for i in range(n):
-		if i % 300000 == 0:
-			if verbose:
-				pbar.update(i)
-
 		value = dnase[i] + 2
 		if value >= 2:
 			encoded_dnase[i][2:value+1] = 1
 		else:
 			encoded_dnase[i][value:3] = 1
 
-	if verbose:
-		pbar.finish()
 	return encoded_dnase 
 
 

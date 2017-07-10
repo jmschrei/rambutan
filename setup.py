@@ -23,7 +23,7 @@ setup(
     install_requires=[
         "cython >= 0.22.1",
         "numpy >= 1.8.0",
-	"pandas >= 0.20.2",
+	    "pandas >= 0.20.2",
         "joblib >= 0.9.0b4",
         "mxnet >= 0.5a3"
     ],

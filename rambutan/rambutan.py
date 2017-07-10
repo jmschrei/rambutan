@@ -2,7 +2,7 @@
 # Contact: Jacob Schreiber
 #          jmschr@cs.washington.edu
 
-import os, numpy
+import os, numpy, pandas
 
 try:
 	from sklearn.metrics import roc_auc_score
@@ -14,6 +14,76 @@ from joblib import Parallel, delayed
 from .io import TrainingGenerator, ValidationGenerator
 from .utils import bedgraph_to_dense, fasta_to_dense
 from .utils import encode_dnase, extract_regions
+
+def extract_sequence(filename, verbose=False):
+	"""Extract a nucleotide sequence from a file and encode it.
+
+	This function will read in a FastA formatted DNA file and convert it to be
+	a one-hot encoded numpy array for internal use. If a one-hot encoded file
+	is passed in, it is simply returned. This function is a convenient wrapper
+	for joblib to parallelize the unzipping portion.
+
+	Parameters
+	----------
+	filename : str or numpy.ndarray
+		The name of the fasta file to open or the one-hot encoded sequence.
+
+	verbose: bool, optional
+		Whether to report the status while extracting sequence. This does not
+		look good when done in parallel, so it is suggested it is set to false
+		in that case.
+
+	Returns
+	-------
+	sequence : numpy.ndarray, shape=(n, 4)
+		The one-hot encoded DNA sequence.
+	"""
+
+	if isinstance(filename, str):
+		if verbose:
+			print("Converting {}".format(filename))
+
+		return fasta_to_dense(filename, verbose)
+	return filename
+
+
+def extract_dnase(filename, verbose=False):
+	"""Extract a DNaseI file and encode it.
+
+	This function will read in a bedgraph format file and convert it to the
+	one-hot encoded numpy array used internally. If a one-hot encoded file is
+	passed in, it is simple returned. This function is a convenient wrapper for
+	joblib to parallelize the unzipping portion.
+
+	Parameters
+	----------
+	filename : str or numpy.ndarray
+		The name of the bedgraph file to open or the one-hot encoded sequence.
+
+	verbose: bool, optional
+		Whether to report the status while extracting sequence. This does not
+		look good when done in parallel, so it is suggested it is set to false
+		in that case.
+
+	Returns
+	-------
+	sequence : numpy.ndarray, shape=(n, 8)
+		The one-hot encoded DNaseI sequence.
+	"""
+
+	if isinstance(filename, str):
+		if verbose:
+			print("Converting {}".format(filename))
+
+		dnase_dense = bedgraph_to_dense(filename, verbose)
+
+		if verbose:
+			print("Encoding {}".format(filename))
+
+		dnase_ohe = encode_dnase(dnase_dense, verbose)
+		return dnase_ohe
+	return filename
+
 
 class Rambutan(object):
 	"""Rambutan: a predictor of mid-range DNA-DNA contacts.
@@ -37,6 +107,10 @@ class Rambutan(object):
 	iteration : int or None, optional
 		The iteration of training to load model parameters from, if using Rambutan
 		in predict mode. Default is None.
+
+	model : mxnet.symbol or None
+		An alternate neural network can be passed in if one wishes to train that
+		using the same framework instead of the original Rambutan model.
 
 	learning_rate : float, optional
 		The learning rate for the optimizer. Default is 0.01.
@@ -87,13 +161,14 @@ class Rambutan(object):
 	>>> numpy.save("chr21.predictions.npy", y_pred)
 	"""
 
-	def __init__(self, name='rambutan', iteration=None, learning_rate=0.01, 
-		num_epoch=25, epoch_size=500, wd=0.0, optimizer='adam', batch_size=1024,
-		min_dist=50000, max_dist=1000000, use_seq=True, use_dnase=True,
-		use_dist=True, verbose=True):
+	def __init__(self, name='rambutan', iteration=None, model=None, 
+		learning_rate=0.01,  num_epoch=25, epoch_size=500, wd=0.0, 
+		optimizer='adam', batch_size=1024, min_dist=50000, max_dist=1000000, 
+		use_seq=True, use_dnase=True, use_dist=True, verbose=True):
 
 		self.name = name
 		self.iteration = iteration
+		self.model = model
 		self.learning_rate = learning_rate
 		self.num_epoch = num_epoch
 		self.epoch_size = epoch_size
@@ -155,17 +230,17 @@ class Rambutan(object):
 
 		if isinstance(sequence, str) and isinstance(dnase, str):
 			if self.verbose:
-				print "Converting FASTA"
+				print("Converting FASTA")
 
 			sequence = fasta_to_dense(sequence, self.verbose)
 
 			if self.verbose:
-				print "Converting DNase"
+				print("Converting DNase")
 
 			dnase = bedgraph_to_dense(dnase, self.verbose)
 
 			if self.verbose:
-				print "Encoding DNase"
+				print("Encoding DNase")
 
 			dnase = encode_dnase(dnase, self.verbose)
 
@@ -196,14 +271,94 @@ class Rambutan(object):
 
 		return y
 
-	def fit(self, sequence, dnase, contacts, regions, validation_sequence=None, 
-		validation_dnase=None, validation_contacts=None, validation_regions=None,
-		ctxs=[0], eval_metric=roc_auc_score, symbol=None):
+	def fit(self, sequence, dnase, contacts, regions=None, validation_contacts=None,
+		training_chromosome=None, validation_chromosome=None, ctxs=[0], 
+		eval_metric=roc_auc_score, symbol=None, n_jobs=1):
+		"""Fit the model to sequence, DNaseI, and Hi-C data.
+
+		You can fit the Rambutan model to new data. One must pass in sequence
+		data, DNaseI data, and Hi-C contact maps. The sequence data can come
+		either in the form of FastA files or one-hot encoded numpy arrays. The
+		DNaseI data can likewise come as either bedgraph files or numpy arrays.
+		The Hi-C data must come in the traditional 7 column format. Validation
+		data can optionally be passed in to report a validation set error during
+		the training process. NOTE: Regardless of if they are used or not, all
+		chromosomes should be passed in to the `sequence` and `dnase` parameters.
+		The contacts specified in `contacts` will dictate which are used. This is
+		to make the internals easier.
+
+		Parameters for training such as the number of epochs and batches are
+		set in the initial constructor, following with the sklearn format for
+		estimators.
+
+		Parameters
+		----------
+		sequence : numpy.ndarray, shape (n, 4) or str
+			The nucleotide sequence. Either a one hot encoded matrix of 
+			nucleotides with n being the size of the chromosome, or a file 
+			name for a fasta file.
+
+		dnase : numpy.ndarray, shape (n, 8) or str
+			The DNaseI fold change sensitivity. Either an encoded matrix in 
+			the manner described in the manuscript or the file name of a 
+			bedgraph file.
+
+		regions : numpy.ndarray or None, optional
+			The regions of interest to look at. All other regions will be
+			ignored. If set to none, the regions of interest are defined
+			to be 1kb bins for which all nucleotides are mappable, i.e.
+			where there are no n or N symbols in the fasta file. Default
+			is None.
+
+		ctxs: list, optional
+			The contexts of the gpus to use for prediction. Currently
+			prediction is only supported on gpus and not cpus due to
+			the time it would take for prediction. For example, if you
+			wanted to use three gpus of index 0 1 and 3 (because 2
+			is busy doing something else) you would just pass in
+			ctxs=[0, 1, 3] and the prediction task will be naturally
+			parallelized across your 3 gpus with a linear speedup.
+
+		Returns
+		-------
+		y : numpy.ndarray, shape=(m, m)
+			A matrix of predictions of shape (m, m) where m is the number of
+			1kb loci in the chromosome. The predictions will reside in the 
+			upper triangle of the matrix since predictions are symmetric.
+		"""
+
+		if not isinstance(sequence, list):
+			raise ValueError("sequence must be a list of FastA file names or pre-encoded numpy arrays.")
+		if not isinstance(dnase, list):
+			raise ValueError("DNase must be a list of bedgraph file names or pre-encoded numpy arrays.")
+		if len(sequence) < 22 or len(dnase) < 22:
+			raise Warning("You should pass in one file for each chromosome unless you know what you are doing.") 
+
+		if isinstance(contacts, str):
+			contacts = pandas.read_csv(contacts, sep='\t')
+
+		with Parallel(n_jobs=n_jobs) as parallel:
+			sequences = parallel( delayed(extract_sequence)(filename, self.verbose) for filename in sequence )
+			dnases = parallel( delayed(extract_dnase)(filename, self.verbose) for filename in dnase )
+
+			if regions is None:
+				if self.verbose:
+					print("Extracting regions")
+
+				regions = parallel( delayed(extract_regions)(sequence) for sequence in sequences )
+
+		sequences = numpy.array(sequences)
+		dnases = numpy.array(dnases)
+		regions = numpy.array(regions)
+
+		if isinstance(validation_contacts, str):
+			validation_contacts = pandas.read_csv(validation_contacts, sep='\t')
+			validation_chr = int(validation_contacts.ix[0][0][3:])
 
 		import mxnet as mx
 		from .models import RambutanSymbol
 
-		symbol = RambutanSymbol if symbol is None else symbol
+		symbol = self.model or RambutanSymbol
 		model = symbol(ctx=map(mx.gpu, ctxs),
 			                   epoch_size=self.epoch_size,
 			                   num_epoch=self.num_epoch,
@@ -212,35 +367,33 @@ class Rambutan(object):
 			                   optimizer=self.optimizer
 			    )	
 
-		validation = (validation_sequence is not None and
-					  validation_dnase is not None and
-					  validation_contacts is not None and
-					  validation_regions is not None)
-
 		training_contacts = numpy.empty((contacts.shape[0], 3), dtype='float64')
 		training_contacts[:,0] = [int(chrom[3:])-1 for chrom in contacts['chr1']]
 		training_contacts[:,1] = contacts['fragmentMid1'].values
 		training_contacts[:,2] = contacts['fragmentMid2'].values
 
-		print training_contacts.shape[0], "training contacts"
+		if self.verbose:
+			print("Training on {} contacts".format(training_contacts.shape[0]))
  
-		X_train = TrainingGenerator(sequence, dnase, training_contacts, regions,
+		X_train = TrainingGenerator(sequences, dnases, training_contacts, regions,
 			self.batch_size, min_dist=self.min_dist, max_dist=self.max_dist,
 			use_seq=self.use_seq, use_dnase=self.use_dnase, 
 			use_dist=self.use_dist)
 
-		if validation:
+		if validation_contacts is not None:
 			validation_contacts = validation_contacts[['fragmentMid1', 'fragmentMid2']].values
-			print validation_contacts.shape[0], "validation contacts"
 
-			X_validation = ValidationGenerator(validation_sequence, 
-				validation_dnase, validation_contacts, validation_regions,
+			if self.verbose:
+				print("Validating on {} contacts from chromosome {}".format(validation_contacts.shape[0], validation_chr))
+
+			X_validation = ValidationGenerator(sequences[validation_chr-1],
+				dnases[validation_chr-1], validation_contacts, regions[validation_chr-1],
 				batch_size=self.batch_size, min_dist=self.min_dist, 
 				max_dist=self.max_dist, use_seq=self.use_seq, 
 				use_dnase=self.use_dnase, use_dist=self.use_dist)
 
 		model.fit( X=X_train,
-				   eval_data=X_validation if validation else None,
+				   eval_data=X_validation if validation_contacts is not None else None,
 				   eval_metric=eval_metric,
 				   batch_end_callback=mx.callback.Speedometer(self.batch_size),
 				   kvstore='device',
