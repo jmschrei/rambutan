@@ -351,7 +351,7 @@ class Rambutan(object):
 
 		if isinstance(validation_contacts, str):
 			validation_contacts = pandas.read_csv(validation_contacts, sep='\t')
-			validation_chr = int(validation_contacts.ix[0][0][3:])
+			validation_chromosome = int(validation_contacts.ix[0][0][3:])
 
 		import mxnet as mx
 		from .models import RambutanSymbol
@@ -384,10 +384,10 @@ class Rambutan(object):
 			validation_contacts = validation_contacts[['fragmentMid1', 'fragmentMid2']].values
 
 			if self.verbose:
-				print("Validating on {} contacts from chromosome {}".format(validation_contacts.shape[0], validation_chr))
+				print("Validating on {} contacts from chromosome {}".format(validation_contacts.shape[0], validation_chromosome))
 
-			X_validation = ValidationGenerator(sequences[validation_chr-1],
-				dnases[validation_chr-1], validation_contacts, regions[validation_chr-1],
+			X_validation = ValidationGenerator(sequences[validation_chromosome-1],
+				dnases[validation_chromosome-1], validation_contacts, regions[validation_chromosome-1],
 				batch_size=self.batch_size, min_dist=self.min_dist, 
 				max_dist=self.max_dist, use_seq=self.use_seq, 
 				use_dnase=self.use_dnase, use_dist=self.use_dist)
