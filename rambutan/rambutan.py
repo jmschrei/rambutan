@@ -331,8 +331,6 @@ class Rambutan(object):
 			raise ValueError("sequence must be a list of FastA file names or pre-encoded numpy arrays.")
 		if not isinstance(dnase, list):
 			raise ValueError("DNase must be a list of bedgraph file names or pre-encoded numpy arrays.")
-		if len(sequence) < 22 or len(dnase) < 22:
-			raise Warning("You should pass in one file for each chromosome unless you know what you are doing.") 
 
 		if isinstance(contacts, str):
 			contacts = pandas.read_csv(contacts, sep='\t')
