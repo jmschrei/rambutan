@@ -356,10 +356,8 @@ class Rambutan(object):
 		import mxnet as mx
 		from .models import RambutanSymbol
 
-		if RambutanSymbol is None:
+		if symbol is None:
 			symbol = self.model
-		else:
-			symbol = RambutanSymbol
 
 		model = symbol(ctx=map(mx.gpu, ctxs),
 			                   epoch_size=self.epoch_size,
