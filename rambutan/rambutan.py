@@ -357,7 +357,7 @@ class Rambutan(object):
 		from .models import RambutanSymbol
 
 		if symbol is None:
-			symbol = self.model
+			symbol = RambutanSymbol
 
 		model = symbol(ctx=map(mx.gpu, ctxs),
 			                   epoch_size=self.epoch_size,
