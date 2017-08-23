@@ -182,7 +182,7 @@ class Rambutan(object):
 		self.use_dist = use_dist
 		self.verbose = verbose
 
-	def predict(self, sequence, dnase, regions=None, ctxs=[0]):
+	def predict(self, sequence, dnase, regions=None, ctxs=[0], sparse=False):
 		"""Make predictions and return the matrix of probabilities.
 
 		Rambutan will make a prediction for each pair of genomic loci defined in
@@ -211,7 +211,7 @@ class Rambutan(object):
 			where there are no n or N symbols in the fasta file. Default
 			is None.
 
-		ctxs: list, optional
+		ctxs : list, optional
 			The contexts of the gpus to use for prediction. Currently
 			prediction is only supported on gpus and not cpus due to
 			the time it would take for prediction. For example, if you
@@ -219,6 +219,10 @@ class Rambutan(object):
 			is busy doing something else) you would just pass in
 			ctxs=[0, 1, 3] and the prediction task will be naturally
 			parallelized across your 3 gpus with a linear speedup.
+
+		sparse : bool, optional
+			Whether to return three arrays, the rows, columns, and values,
+			or the full dense matrix. Sparse is useful for large matrices.
 
 		Returns
 		-------
@@ -255,21 +259,41 @@ class Rambutan(object):
 			self.use_seq, self.use_dnase, self.use_dist, self.min_dist, 
 			self.max_dist, self.batch_size, self.verbose) for ctx in ctxs)
 
-		n = int(regions.max()) / 1000 + 1
-		y = numpy.zeros((n, n))
+		if sparse == False:
+			n = int(regions.max()) / 1000 + 1
+			y = numpy.zeros((n, n))
 
-		for ctx in ctxs:
-			with open('.rambutan.predictions.{}.txt'.format(ctx), 'r') as infile:
-				for line in infile:
-					mid1, mid2, p = line.split()
-					mid1 = (int(float(mid1)) - 500) / 1000
-					mid2 = (int(float(mid2)) - 500) / 1000
-					p = float(p)
-					y[mid1, mid2] = p
+			for ctx in ctxs:
+				with open('.rambutan.predictions.{}.txt'.format(ctx), 'r') as infile:
+					for line in infile:
+						mid1, mid2, p = line.split()
+						mid1 = (int(float(mid1)) - 500) / 1000
+						mid2 = (int(float(mid2)) - 500) / 1000
+						p = float(p)
+						y[mid1, mid2] = p
 
-			os.system('rm .rambutan.predictions.{}.txt'.format(ctx))
+				os.system('rm .rambutan.predictions.{}.txt'.format(ctx))
 
-		return y
+			return y
+
+		else:
+			rows, cols, values = [], [], []
+			for ctx in ctxs:
+				with open('.rambutan.predictions.{}.txt'.format(ctx), 'r') as infile:
+					for line in infile:
+						mid1, mid2, p = line.split()
+						mid1, mid2, p = int(mid1), int(mid2), float(p)
+
+						rows.append(mid1)
+						cols.append(mid2)
+						values.append(p)
+
+				os.system('rm .rambutan.predictions.{}.txt'.format(ctx))
+
+			rows = numpy.array(rows)
+			cols = numpy.array(cols)
+			values = numpy.array(values)
+			return rows, cols, values
 
 	def fit(self, sequence, dnase, contacts, regions=None, validation_contacts=None,
 		training_chromosome=None, validation_chromosome=None, ctxs=[0], 
