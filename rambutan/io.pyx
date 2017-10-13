@@ -63,8 +63,8 @@ class TrainingGenerator(DataIter):
 		self.min_dist     = min_dist
 		self.max_dist     = max_dist
 		self.batch_size   = batch_size
-		self.data_shapes  = {'x1seq' : (1, 1000, 4), 'x2seq' : (1, 1000, 4), 
-			'x1dnase' : (1, 1000, 8), 'x2dnase' : (1, 1000, 8), 
+		self.data_shapes  = {'x1seq' : (1, 5000, 4), 'x2seq' : (1, 5000, 4), 
+			'x1dnase' : (1, 5000, 8), 'x2dnase' : (1, 5000, 8), 
 			'distance' : (100,)}
 
 	@property
@@ -88,19 +88,19 @@ class TrainingGenerator(DataIter):
 		cdef dict data, labels, contact_dict = self.contact_dict
 		cdef list data_list, label_list
 
-		data = { 'x1seq' : numpy.zeros((batch_size, 1000, 4)),
-				 'x2seq' : numpy.zeros((batch_size, 1000, 4)),
-				 'x1dnase' : numpy.zeros((batch_size, 1000, 8)),
-				 'x2dnase' : numpy.zeros((batch_size, 1000, 8)),
+		data = { 'x1seq' : numpy.zeros((batch_size, 5000, 4)),
+				 'x2seq' : numpy.zeros((batch_size, 5000, 4)),
+				 'x1dnase' : numpy.zeros((batch_size, 5000, 8)),
+				 'x2dnase' : numpy.zeros((batch_size, 5000, 8)),
 				 'distance' : numpy.zeros((batch_size, 100))}
 
 		labels = { 'softmax_label' : numpy.zeros(batch_size) }
 
 		while True:
-			data['x1seq'] = data['x1seq'].reshape(batch_size, 1000, 4)
-			data['x2seq'] = data['x2seq'].reshape(batch_size, 1000, 4)
-			data['x1dnase'] = data['x1dnase'].reshape(batch_size, 1000, 8) * 0
-			data['x2dnase'] = data['x2dnase'].reshape(batch_size, 1000, 8) * 0
+			data['x1seq'] = data['x1seq'].reshape(batch_size, 5000, 4)
+			data['x2seq'] = data['x2seq'].reshape(batch_size, 5000, 4)
+			data['x1dnase'] = data['x1dnase'].reshape(batch_size, 5000, 8) * 0
+			data['x2dnase'] = data['x2dnase'].reshape(batch_size, 5000, 8) * 0
 
 			i = 0
 			while i < batch_size:
@@ -109,19 +109,19 @@ class TrainingGenerator(DataIter):
 					c, mid1, mid2 = contacts[k, :3]
 				else:
 					mid1 = numpy.random.choice(self.regions[c])
-					mid2 = mid1 + numpy.random.choice((self.max_dist - self.min_dist) / 1000 + 1) * 1000 + self.min_dist
+					mid2 = mid1 + numpy.random.choice((self.max_dist - self.min_dist) / 5000 + 1) * 5000 + self.min_dist
 					if mid2 > self.regions[c][-1] or contact_dict.has_key((c, mid1, mid2)):
 						continue
 
 				labels['softmax_label'][i] = (i+1)%2
 
 				if self.use_seq:
-					data['x1seq'][i] = sequence[c][mid1-500:mid1+500]
-					data['x2seq'][i] = sequence[c][mid2-500:mid2+500]
+					data['x1seq'][i] = sequence[c][mid1-2500:mid1+2500]
+					data['x2seq'][i] = sequence[c][mid2-2500:mid2+2500]
 
 				if self.use_dnase:
-					data['x1dnase'][i] = dnases[c][mid1-500:mid1+500]
-					data['x2dnase'][i] = dnases[c][mid2-500:mid2+500]
+					data['x1dnase'][i] = dnases[c][mid1-2500:mid1+2500]
+					data['x2dnase'][i] = dnases[c][mid2-2500:mid2+2500]
 
 				if self.use_dist:
 					distance = mid2 - mid1
@@ -134,10 +134,10 @@ class TrainingGenerator(DataIter):
 
 				i += 1
 
-			data['x1seq'] = data['x1seq'].reshape(batch_size, 1, 1000, 4)
-			data['x2seq'] = data['x2seq'].reshape(batch_size, 1, 1000, 4)
-			data['x1dnase'] = data['x1dnase'].reshape(batch_size, 1, 1000, 8)
-			data['x2dnase'] = data['x2dnase'].reshape(batch_size, 1, 1000, 8)
+			data['x1seq'] = data['x1seq'].reshape(batch_size, 1, 5000, 4)
+			data['x2seq'] = data['x2seq'].reshape(batch_size, 1, 5000, 4)
+			data['x1dnase'] = data['x1dnase'].reshape(batch_size, 1, 5000, 8)
+			data['x2dnase'] = data['x2dnase'].reshape(batch_size, 1, 5000, 8)
 
 			data_list = [ array(data[key]) for key in self.data_shapes.keys() ]
 			label_list = [ array(labels['softmax_label']) ]
@@ -166,8 +166,8 @@ class ValidationGenerator(DataIter):
 		self.min_dist     = min_dist
 		self.max_dist     = max_dist
 		self.batch_size   = batch_size
-		self.data_shapes  = {'x1seq' : (1, 1000, 4), 'x2seq' : (1, 1000, 4), 
-			'x1dnase' : (1, 1000, 8), 'x2dnase' : (1, 1000, 8), 
+		self.data_shapes  = {'x1seq' : (1, 5000, 4), 'x2seq' : (1, 5000, 4), 
+			'x1dnase' : (1, 5000, 8), 'x2dnase' : (1, 5000, 8), 
 			'distance' : (100,)}
 
 	@property
@@ -189,10 +189,10 @@ class ValidationGenerator(DataIter):
 		cdef list data_list, label_list
 		cdef str key
 
-		data = { 'x1seq' : numpy.zeros((batch_size, 1000, 4)),
-				 'x2seq' : numpy.zeros((batch_size, 1000, 4)),
-				 'x1dnase' : numpy.zeros((batch_size, 1000, 8)),
-				 'x2dnase' : numpy.zeros((batch_size, 1000, 8)),
+		data = { 'x1seq' : numpy.zeros((batch_size, 5000, 4)),
+				 'x2seq' : numpy.zeros((batch_size, 5000, 4)),
+				 'x1dnase' : numpy.zeros((batch_size, 5000, 8)),
+				 'x2dnase' : numpy.zeros((batch_size, 5000, 8)),
 				 'distance' : numpy.zeros((batch_size, 100))
 		}
 
@@ -201,10 +201,10 @@ class ValidationGenerator(DataIter):
 		j = 0
 		l = self.contacts.shape[0] - batch_size/2
 		while j < l:
-			data['x1seq'] = data['x1seq'].reshape(batch_size, 1000, 4)
-			data['x2seq'] = data['x2seq'].reshape(batch_size, 1000, 4)
-			data['x1dnase'] = data['x1dnase'].reshape(batch_size, 1000, 8)
-			data['x2dnase'] = data['x2dnase'].reshape(batch_size, 1000, 8)
+			data['x1seq'] = data['x1seq'].reshape(batch_size, 5000, 4)
+			data['x2seq'] = data['x2seq'].reshape(batch_size, 5000, 4)
+			data['x1dnase'] = data['x1dnase'].reshape(batch_size, 5000, 8)
+			data['x2dnase'] = data['x2dnase'].reshape(batch_size, 5000, 8)
 
 			i = 0
 			while i < batch_size:
@@ -216,19 +216,19 @@ class ValidationGenerator(DataIter):
 
 				else:
 					mid1, mid2 = numpy.random.choice(self.regions, 2)
-					mid2 = mid1 + numpy.random.choice((self.max_dist - self.min_dist) / 1000) * 1000 + self.min_dist
+					mid2 = mid1 + numpy.random.choice((self.max_dist - self.min_dist) / 5000) * 5000 + self.min_dist
 					if mid2 > self.regions[-1]:
 						continue
 
 				labels['softmax_label'][i] = (i+1)%2
 
 				if self.use_seq:
-					data['x1seq'][i] = sequence[mid1-500:mid1+500]
-					data['x2seq'][i] = sequence[mid2-500:mid2+500]
+					data['x1seq'][i] = sequence[mid1-2500:mid1+2500]
+					data['x2seq'][i] = sequence[mid2-2500:mid2+2500]
 
 				if self.use_dnase:
-					data['x1dnase'][i] = dnase[mid1-500:mid1+500]
-					data['x2dnase'][i] = dnase[mid2-500:mid2+500]
+					data['x1dnase'][i] = dnase[mid1-2500:mid1+2500]
+					data['x2dnase'][i] = dnase[mid2-2500:mid2+2500]
 
 				if self.use_dist:
 					distance = mid2 - mid1
@@ -241,10 +241,10 @@ class ValidationGenerator(DataIter):
 
 				i += 1
 
-			data['x1seq'] = data['x1seq'].reshape(batch_size, 1, 1000, 4)
-			data['x2seq'] = data['x2seq'].reshape(batch_size, 1, 1000, 4)
-			data['x1dnase'] = data['x1dnase'].reshape(batch_size, 1, 1000, 8)
-			data['x2dnase'] = data['x2dnase'].reshape(batch_size, 1, 1000, 8)
+			data['x1seq'] = data['x1seq'].reshape(batch_size, 1, 5000, 4)
+			data['x2seq'] = data['x2seq'].reshape(batch_size, 1, 5000, 4)
+			data['x1dnase'] = data['x1dnase'].reshape(batch_size, 1, 5000, 8)
+			data['x2dnase'] = data['x2dnase'].reshape(batch_size, 1, 5000, 8)
 
 			data_list = [array(data[key][:i]) for key in self.data_shapes.keys()]
 			label_list = [array(labels['softmax_label'])]
