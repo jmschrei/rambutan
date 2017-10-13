@@ -116,8 +116,11 @@ class TrainingGenerator(DataIter):
 				labels['softmax_label'][i] = (i+1)%2
 
 				if self.use_seq:
-					data['x1seq'][i] = sequence[c][mid1-2500:mid1+2500]
-					data['x2seq'][i] = sequence[c][mid2-2500:mid2+2500]
+					try:
+						data['x1seq'][i] = sequence[c][mid1-2500:mid1+2500]
+						data['x2seq'][i] = sequence[c][mid2-2500:mid2+2500]
+					except:
+						print i, k, c, mid1, mid2, len(sequence[c]), len(dnases[c])
 
 				if self.use_dnase:
 					data['x1dnase'][i] = dnases[c][mid1-2500:mid1+2500]
