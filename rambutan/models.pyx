@@ -44,19 +44,19 @@ def Dense(x, num_hidden):
 
 
 def Arm(seq, dnase):
-	seq = Convolution(seq, 48, (7, 4), pad=(3, 0))
+	seq = Convolution(seq, 96, (7, 4), pad=(3, 0))
 	seq = Pooling(seq, kernel=(3, 1), stride=(3, 1), pool_type='max')
-	seq = Convolution(seq, 48, (7, 1), pad=(3, 0))
+	seq = Convolution(seq, 96, (7, 1), pad=(3, 0))
 	seq = Pooling(seq, kernel=(3, 1), stride=(3, 1), pool_type='max')
 
 	dnase = Pooling(dnase, kernel=(9, 1), stride=(9, 1), pool_type='max')
-	dnase = Convolution(dnase, 8, (1, 8))
+	dnase = Convolution(dnase, 32, (1, 8))
 
 	x = Concat(seq, dnase)
-	x = Convolution(x, 64, (3, 1))
-	x = Convolution(x, 64, (3, 1))
+	x = Convolution(x, 128, (3, 1))
+	x = Convolution(x, 128, (3, 1))
 	x = Flatten(Pooling(x, kernel=(107, 1), stride=(107, 1), pool_type='max'))
-	x = Dense(x, 64)
+	x = Dense(x, 128)
 	return x
 
 
@@ -73,7 +73,7 @@ def RambutanSymbol(**kwargs):
 	xd = Dense(xd, 32)
 
 	x = Concat(x1, x2, xd)
-	x = Dense(x, 64)
+	x = Dense(x, 256)
 	x = mx.symbol.FullyConnected(x, num_hidden=2)
 	y = SoftmaxOutput(data=x, name='softmax')
 	model = mx.model.FeedForward(symbol=y, **kwargs)
