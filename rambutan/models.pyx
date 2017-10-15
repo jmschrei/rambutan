@@ -44,17 +44,17 @@ def Dense(x, num_hidden):
 
 
 def Arm(seq, dnase):
-	seq = Convolution(seq, 96, (7, 4), pad=(3, 0))
+	seq = Convolution(seq, 48, (7, 4), pad=(3, 0))
 	seq = Pooling(seq, kernel=(3, 1), stride=(3, 1), pool_type='max')
-	seq = Convolution(seq, 96, (7, 1), pad=(3, 0))
+	seq = Convolution(seq, 48, (7, 1), pad=(3, 0))
 	seq = Pooling(seq, kernel=(3, 1), stride=(3, 1), pool_type='max')
 
 	dnase = Pooling(dnase, kernel=(9, 1), stride=(9, 1), pool_type='max')
 	dnase = Convolution(dnase, 32, (1, 8))
 
 	x = Concat(seq, dnase)
-	x = Convolution(x, 128, (3, 1))
-	x = Convolution(x, 128, (3, 1))
+	x = Convolution(x, 64, (3, 1))
+	x = Convolution(x, 64, (3, 1))
 	x = Flatten(Pooling(x, kernel=(551, 1), stride=(551, 1), pool_type='max'))
 	x = Dense(x, 128)
 	return x
@@ -100,20 +100,20 @@ def predict_task(name, iteration, ctx, n_jobs, numpy.ndarray sequence,
 					continue
 
 				if k == 0:
-					data = { 'x1seq'    : numpy.zeros((10240, 1000, 4)),
-							 'x2seq'    : numpy.zeros((10240, 1000, 4)),
-							 'x1dnase'  : numpy.zeros((10240, 1000, 8)),
-							 'x2dnase'  : numpy.zeros((10240, 1000, 8)),
+					data = { 'x1seq'    : numpy.zeros((10240, 5000, 4)),
+							 'x2seq'    : numpy.zeros((10240, 5000, 4)),
+							 'x1dnase'  : numpy.zeros((10240, 5000, 8)),
+							 'x2dnase'  : numpy.zeros((10240, 5000, 8)),
 							 'distance' : numpy.zeros((10240, 100)) }
 
 				if k != 10240:
 					if use_seq:
-						data['x1seq'][k] = sequence[mid1-500:mid1+500]
-						data['x2seq'][k] = sequence[mid2-500:mid2+500]
+						data['x1seq'][k] = sequence[mid1-2500:mid1+2500]
+						data['x2seq'][k] = sequence[mid2-2500:mid2+2500]
 
 					if use_dnase:
-						data['x1dnase'][k] = dnase[mid1-500:mid1+500]
-						data['x2dnase'][k] = dnase[mid2-500:mid2+500]
+						data['x1dnase'][k] = dnase[mid1-2500:mid1+2500]
+						data['x2dnase'][k] = dnase[mid2-2500:mid2+2500]
 
 					if use_dist:
 						distance = mid2 - mid1
@@ -131,19 +131,19 @@ def predict_task(name, iteration, ctx, n_jobs, numpy.ndarray sequence,
 					tot += 1
 
 				else:
-					data['x1seq'] = data['x1seq'].reshape((10240, 1, 1000, 4))
-					data['x2seq'] = data['x2seq'].reshape((10240, 1, 1000, 4))
-					data['x1dnase'] = data['x1dnase'].reshape((10240, 1, 1000, 8))
-					data['x2dnase'] = data['x2dnase'].reshape((10240, 1, 1000, 8))
+					data['x1seq'] = data['x1seq'].reshape((10240, 1, 5000, 4))
+					data['x2seq'] = data['x2seq'].reshape((10240, 1, 5000, 4))
+					data['x1dnase'] = data['x1dnase'].reshape((10240, 1, 5000, 8))
+					data['x2dnase'] = data['x2dnase'].reshape((10240, 1, 5000, 8))
 
 					X = mx.io.NDArrayIter(data, batch_size=batch_size)
 					y = model.predict(X)
 					k = 0
 
-					data['x1seq'] = data['x1seq'].reshape((10240, 1000, 4))
-					data['x2seq'] = data['x2seq'].reshape((10240, 1000, 4))
-					data['x1dnase'] = data['x1dnase'].reshape((10240, 1000, 8))
-					data['x2dnase'] = data['x2dnase'].reshape((10240, 1000, 8))
+					data['x1seq'] = data['x1seq'].reshape((10240, 5000, 4))
+					data['x2seq'] = data['x2seq'].reshape((10240, 5000, 4))
+					data['x1dnase'] = data['x1dnase'].reshape((10240, 5000, 8))
+					data['x2dnase'] = data['x2dnase'].reshape((10240, 5000, 8))
 
 					predictions[:,2] = y[:,1]
 					for mid1, mid2, y in predictions:
@@ -157,10 +157,10 @@ def predict_task(name, iteration, ctx, n_jobs, numpy.ndarray sequence,
 		if verbose:
 			print("GPU [{}] -- {} samples loaded, predicting...".format(ctx, k))
 
-		data['x1seq'] = data['x1seq'].reshape((10240, 1, 1000, 4))[:k]
-		data['x2seq'] = data['x2seq'].reshape((10240, 1, 1000, 4))[:k]
-		data['x1dnase'] = data['x1dnase'].reshape((10240, 1, 1000, 8))[:k]
-		data['x2dnase'] = data['x2dnase'].reshape((10240, 1, 1000, 8))[:k]
+		data['x1seq'] = data['x1seq'].reshape((10240, 1, 5000, 4))[:k]
+		data['x2seq'] = data['x2seq'].reshape((10240, 1, 5000, 4))[:k]
+		data['x1dnase'] = data['x1dnase'].reshape((10240, 1, 5000, 8))[:k]
+		data['x2dnase'] = data['x2dnase'].reshape((10240, 1, 5000, 8))[:k]
 		data['distance'] = data['distance'][:k]
 
 		X = mx.io.NDArrayIter(data, batch_size=batch_size if batch_size <= k else k)
