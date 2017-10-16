@@ -260,15 +260,15 @@ class Rambutan(object):
 			self.max_dist, self.batch_size, self.verbose) for ctx in ctxs)
 
 		if sparse == False:
-			n = int(regions.max()) / 1000 + 1
+			n = int(regions.max()) / 5000 + 1
 			y = numpy.zeros((n, n))
 
 			for ctx in ctxs:
 				with open('.rambutan.predictions.{}.txt'.format(ctx), 'r') as infile:
 					for line in infile:
 						mid1, mid2, p = line.split()
-						mid1 = (int(float(mid1)) - 500) / 1000
-						mid2 = (int(float(mid2)) - 500) / 1000
+						mid1 = (int(float(mid1)) - 2500) / 5000
+						mid2 = (int(float(mid2)) - 2500) / 5000
 						p = float(p)
 						y[mid1, mid2] = p
 
