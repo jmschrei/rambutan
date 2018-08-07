@@ -4,7 +4,9 @@
 
 Rambutan is a deep convolutional neural network which predicts 3D chromatin architecture using only nucleotide sequence and DNaseI sensitivity. Specifically it predicts whether a pair of 1kb loci engage in a statistically significant contact with respect to the genomic distance effect as defined by Fit-Hi-C. If you've previously used Fit-Hi-C to identify relevant contacts in experimentally acquired Hi-C contact maps, you can now use Rambutan to do that for human cell types which don't have Hi-C data! Rambutan is trained off the deeply sequenced GM12878 experiment from the Rao 2014 paper and so can make predictions at 1kb resolution, far higher than most experimentally acquired contact maps.  
 
-Read the manuscript here! <a href="http://biorxiv.org/content/early/2017/01/28/103614">Nucleotide sequence and DNaseI sensitivity are predictive of 3D chromatin architecture</a>
+Read the manuscript here! <a href="https://www.biorxiv.org/content/early/2018/07/15/103614">Nucleotide sequence and DNaseI sensitivity are predictive of 3D chromatin architecture</a>
+
+*NOTE: After our original submission we discovered an error in our calling of statistically significant contacts. Briefly, when calculating the prior probability of a contact, we used the number of contacts at a certain genomic distance in a chromosome but divided by the total number of bins in the full genome. When we corrected this mistake we noticed that the Rambutan model, as it curently stands, did not outperform simply using the GM12878 contact map that Rambutan was trained on as the predictor in other cell types. While we investigate these new results, we ask that readers treat this manuscript skeptically.*
 
 The code used to recreate most figures in the paper can be found in Biological_Validation.ipynb. 
 
